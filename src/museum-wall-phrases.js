@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 export function addMuseumWallPhrases(parent) {
   const phrases = [
-    'Le jardinier du palais, à l’heure des vêpres, va apporter du romarin à l’abbé malade dans sa cellule.',
+    "L'herboriste du monastère, à l'heure des vêpres, va apporter du romarin et un thé citronné ...",
     'Pendant le banquet, le très noble seigneur de Noirmoutier, d’un air solennel, prodigue des bienfaits à ses nobles barons assis autour de lui.',
     'Près de l’arcade principale, une vieille mendiante supplie le prince héritier de lui donner quelques deniers pour pouvoir manger.',
     'À l’ombre des remparts de l’ancienne forteresse, le vieux conseiller du roi, malgré les protestations véhémentes des courtisans réunis dans la grande salle, remet discrètement un parchemin scellé au jeune messager chargé de prévenir les habitants du village avant la tombée de la nuit.',
