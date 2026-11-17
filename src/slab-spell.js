@@ -24,6 +24,7 @@ import { createSlabImpacts } from './slab-impact.js';
 import { statueExplosionSound } from './statue-explosion-sound.js';
 
 export function createSlabSpell(scene, prisoner) {
+	const mirror = scene.children.find(object => object.userData.hitMirror);
 	const slabImpacts = createSlabImpacts(scene);
 	let score = 0;
 	const scoredTargets = new WeakSet();
@@ -119,9 +120,17 @@ export function createSlabSpell(scene, prisoner) {
 		}
 		return target.position.clone();
 	}
-	function crushWithBroom() {
+	function crushWithBroom(hit) {
 		const broom = prisoner.getObjectByName('Escoba mágica del prisionero');
 		const strikeOrigin = (broom?.getObjectByName('broom-ground-contact') ?? broom)?.getWorldPosition(new THREE.Vector3()) ?? prisoner.localToWorld(new THREE.Vector3(0, 1, 0));
+		if (hit?.target === bowlPlant.bowl && !bowlPlant.broken) {
+			const distance = new THREE.Box3().setFromObject(bowlPlant.bowl).distanceToPoint(strikeOrigin);
+			if (distance <= 2.4 && bowlPlant.breakBowl()) {
+				prisoner.userData.recordBroomCrush?.();
+				return true;
+			}
+			return false;
+		}
 		const insects = [
 			...allNoFaces.map(handler => ({ root: handler.root, encounter: handler, wallCreature: true })),
 			...catEncounter.cats.filter(toad => !toad.defeated).map(toad => ({ root: toad.root, encounter: catEncounter })),
@@ -168,7 +177,12 @@ export function createSlabSpell(scene, prisoner) {
 	}
 	function cast(hit) {
 		if (prisoner.userData.broomMode) {
-			prisoner.userData.swingBroom?.(crushWithBroom);
+			ceramicBreak.unlock(); bowlPlant.unlockAudio();
+			prisoner.userData.swingBroom?.(() => {
+				const brokenBefore = bowlPlant.broken;
+				crushWithBroom(hit);
+				if (!brokenBefore && bowlPlant.broken) ceramicBreak.play();
+			});
 			return;
 		}
 		ceramicBreak.unlock();
@@ -203,7 +217,7 @@ export function createSlabSpell(scene, prisoner) {
 		if (target?.userData.spellTarget === 'plant-flower') point = target.getWorldPosition(new THREE.Vector3());
 		const removeSlab = mesh?.isInstancedMesh && mesh.userData.draggableSlabs && instanceId !== undefined && !mesh.userData.removedSlabs?.has(instanceId);
 		if (target?.userData.spellTarget === 'oval-mirror') {
-			prisoner.userData.transformWandToBroom?.();
+			mirror?.userData.hitMirror(() => prisoner.userData.transformWandToBroom?.());
 		} else if (target === encounter.snake) {
 			const wasVisible = target.visible;
 			encounter.target();
@@ -262,6 +276,7 @@ export function createSlabSpell(scene, prisoner) {
 		if (!target && (mesh?.userData.draggableSlabs || mesh?.name === 'floor')) catEncounter.spawn(point);
 	}
 	function update(dt) {
+		mirror?.userData.updateMirror(dt);
 		slabImpacts.update(dt);
   for (let index = activeRays.length - 1; index >= 0; index--) {
    const effect = activeRays[index];
