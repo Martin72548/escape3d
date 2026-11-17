@@ -4,7 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="description" content="Escena de realidad virtual creada con Three.js, WebXR y XR Components." />
-		<title>Proyecto de realidad virtual ? Diplomatura en tecnologias inmersivas</title>
+		<title>Le magicien</title>
 		<link rel="stylesheet" href="/src/styles.css" />
 		<script type="importmap">
 {
@@ -53,8 +53,8 @@
 		<div id="scoreboard" role="status" aria-live="polite" aria-atomic="true"><span>Points</span><strong id="score-value">0</strong></div>
 		<div id="scene-container" aria-label="Escena tridimensional preparada para realidad virtual"></div>
 		<div id="xr-button-container" aria-live="polite"></div>
-		<div class="view-controls"><button id="first-person-toggle" type="button" aria-pressed="false" aria-describedby="first-person-hint">Première personne</button><span id="first-person-hint" hidden>Arrastra para mirar · WASD para caminar · Clic para lanzar un rayo</span></div>
-		<div class="fullscreen-controls"><button id="fullscreen-toggle" type="button" aria-pressed="false">Plein écran</button><span id="fullscreen-status" role="status"></span></div>
+		<div class="view-controls"><button id="first-person-toggle" type="button" aria-label="Première personne" title="Première personne" aria-pressed="false" aria-describedby="first-person-hint"><span aria-hidden="true">POV</span></button><span id="first-person-hint" hidden>Arrastra para mirar · WASD para caminar · Clic para lanzar un rayo</span></div>
+		<div class="fullscreen-controls"><button id="fullscreen-toggle" type="button" aria-pressed="false" aria-label="Plein écran" title="Plein écran"><svg viewBox="0 0 64 64" width="28" height="28" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M24 24 8 8m0 14V8h14M40 24 56 8m-14 0h14v14M24 40 8 56m14 0H8V42M40 40l16 16m0-14v14H42"/></svg></button><span id="fullscreen-status" role="status"></span></div>
 		<script>
 			window.showSceneError = function (error) {
 				let panel = document.getElementById('scene-error');
