@@ -238,24 +238,33 @@ export function createPrisoner() {
 		}
 		const cord=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),84,.0017,5,false),binding);cord.name='Hebra trenzada de la atadura';cord.castShadow=true;broom.add(cord);
 	}
+	let broomSwingAge = Infinity, broomImpact = null, broomExpiresAt = Infinity;
+	function restoreHandRays() {
+		broom.visible = false;
+		broom.rotation.x = 0;
+		broomExpiresAt = Infinity;
+		broomSwingAge = Infinity;
+		broomImpact = null;
+		person.userData.broomImpactPending = null;
+		person.userData.broomMode = false;
+		person.userData.broomStriking = false;
+		person.userData.broomLiftAmount = 0;
+		person.userData.broomStrikeAmount = 0;
+	}
 	person.userData.transformWandToBroom = () => {
 		wand.visible = false;
 		broom.visible = true;
 		person.userData.broomMode = true;
 		person.userData.broomCrushedCount = 0;
+		broomExpiresAt = performance.now() + 60000;
 	};
 	person.userData.recordBroomCrush = () => {
 		if (!person.userData.broomMode) return;
 		person.userData.broomCrushedCount = (person.userData.broomCrushedCount ?? 0) + 1;
 		if (person.userData.broomCrushedCount >= 3) {
-			broom.visible = false;
-			person.userData.broomMode = false;
-			person.userData.broomLiftAmount = 0;
-			person.userData.broomStrikeAmount = 0;
+			restoreHandRays();
 		}
 	};
-	let broomSwingAge = Infinity;
-	let broomImpact = null;
 	person.userData.swingBroom = onImpact => {
 		if (!person.userData.broomMode || broomSwingAge !== Infinity) return false;
 		broomSwingAge = 0;
@@ -267,6 +276,7 @@ export function createPrisoner() {
 	for(const side of [-1,1])limb([side*.055,1.43,.015],[side*.035,1.53,.045],.012,.009,skin);
 	const updateFace=addPrisonerFace(person,{skin,shadedSkin,hair});
 	person.userData.updateAppearance=delta=>{
+		if (person.userData.broomMode && performance.now() >= broomExpiresAt) restoreHandRays();
 		updateFace(delta);
 		if(broomSwingAge===Infinity)return;
 		broomSwingAge=Math.min(.64,broomSwingAge+delta);
