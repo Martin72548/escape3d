@@ -50,11 +50,11 @@
 				if (canvas) { canvas.tabIndex = 0; canvas.focus({ preventScroll: true }); }
 			});
 		</script>
-		<div id="scoreboard" role="status" aria-live="polite" aria-atomic="true"><span>Puntos</span><strong id="score-value">0</strong></div>
+		<div id="scoreboard" role="status" aria-live="polite" aria-atomic="true"><span>Points</span><strong id="score-value">0</strong></div>
 		<div id="scene-container" aria-label="Escena tridimensional preparada para realidad virtual"></div>
 		<div id="xr-button-container" aria-live="polite"></div>
-		<div class="view-controls"><button id="first-person-toggle" type="button" aria-pressed="false" aria-describedby="first-person-hint">Primera persona</button><span id="first-person-hint" hidden>Arrastra para mirar · WASD para caminar · Clic para lanzar un rayo</span></div>
-		<div class="fullscreen-controls"><button id="fullscreen-toggle" type="button" aria-pressed="false">Pantalla completa</button><span id="fullscreen-status" role="status"></span></div>
+		<div class="view-controls"><button id="first-person-toggle" type="button" aria-pressed="false" aria-describedby="first-person-hint">Première personne</button><span id="first-person-hint" hidden>Arrastra para mirar · WASD para caminar · Clic para lanzar un rayo</span></div>
+		<div class="fullscreen-controls"><button id="fullscreen-toggle" type="button" aria-pressed="false">Plein écran</button><span id="fullscreen-status" role="status"></span></div>
 		<script>
 			window.showSceneError = function (error) {
 				let panel = document.getElementById('scene-error');
