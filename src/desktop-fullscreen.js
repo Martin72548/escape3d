@@ -2,10 +2,11 @@ export function enableFullscreen() {
 	const button=document.querySelector('#fullscreen-toggle');
 	const status=document.querySelector('#fullscreen-status');
 	if(!button)return;
-	if(!document.fullscreenEnabled||!document.documentElement.requestFullscreen){button.disabled=true;button.textContent='Plein écran non disponible';return;}
+	function label(text){button.setAttribute('aria-label',text);button.title=text;}
+	if(!document.fullscreenEnabled||!document.documentElement.requestFullscreen){button.disabled=true;label('Plein écran non disponible');return;}
 	function sync(){
 		const active=!!document.fullscreenElement;
-		button.textContent=active?'Quitter le plein écran':'Plein écran';
+		label(active?'Quitter le plein écran':'Plein écran');
 		button.setAttribute('aria-pressed',String(active));
 		window.dispatchEvent(new Event('resize'));
 	}
