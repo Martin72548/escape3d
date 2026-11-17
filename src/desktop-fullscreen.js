@@ -2,10 +2,10 @@ export function enableFullscreen() {
 	const button=document.querySelector('#fullscreen-toggle');
 	const status=document.querySelector('#fullscreen-status');
 	if(!button)return;
-	if(!document.fullscreenEnabled||!document.documentElement.requestFullscreen){button.disabled=true;button.textContent='Pantalla completa no disponible';return;}
+	if(!document.fullscreenEnabled||!document.documentElement.requestFullscreen){button.disabled=true;button.textContent='Plein écran non disponible';return;}
 	function sync(){
 		const active=!!document.fullscreenElement;
-		button.textContent=active?'Salir de pantalla completa':'Pantalla completa';
+		button.textContent=active?'Quitter le plein écran':'Plein écran';
 		button.setAttribute('aria-pressed',String(active));
 		window.dispatchEvent(new Event('resize'));
 	}
@@ -14,7 +14,7 @@ export function enableFullscreen() {
 		try{
 			if(document.fullscreenElement)await document.exitFullscreen();
 			else await document.documentElement.requestFullscreen();
-		}catch{status.textContent='No se pudo activar la pantalla completa.';}
+		}catch{status.textContent='Impossible d’activer le plein écran.';}
 		finally{button.disabled=false;sync();}
 	});
 	document.addEventListener('fullscreenchange',sync);

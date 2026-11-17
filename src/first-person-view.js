@@ -25,7 +25,7 @@ export function enableFirstPersonView({ camera, prisoner, renderer, orbitControl
 			camera.position.copy(savedPosition); orbitControls.target.copy(savedTarget);
 			orbitControls.enabled = true; orbitControls.update();
 		}
-		button.textContent = active ? 'Volver a vista exterior' : 'Primera persona';
+		button.textContent = active ? 'Revenir à la vue extérieure' : 'Première personne';
 		button.setAttribute('aria-pressed', String(active));
 		hint.hidden = !active;
 	}

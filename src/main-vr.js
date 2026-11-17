@@ -164,9 +164,9 @@ controllers.addEventListener(CMEventTypes.ON_BUTTON_DOWN, (event) => {
 
 const xrButton = new XRSessionModeButton(renderer, {
 	mode: 'immersive-vr',
-	label: 'Entrar en VR',
-	activeLabel: 'Salir de VR',
-	unsupportedLabel: 'VR no disponible',
+	label: 'VR disponible',
+	activeLabel: 'Quitter la VR',
+	unsupportedLabel: 'VR non disponible',
 	optionalFeatures: ['local-floor', 'bounded-floor'],
 });
 buttonContainer.appendChild(xrButton.button);
