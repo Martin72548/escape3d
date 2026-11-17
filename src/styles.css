@@ -11,7 +11,7 @@ body { overflow-x: hidden; }
 a { color: inherit; }
 
 /* Shared appearance for static controls and dynamically created buttons. */
-body button {
+body button:not(#fullscreen-toggle):not(#first-person-toggle) {
 	min-width: 140px !important;
 	min-height: 46px !important;
 	padding: 12px 24px !important;
@@ -24,7 +24,7 @@ body button {
 	box-shadow: 0 4px 14px #0003 !important;
 	cursor: pointer !important;
 }
-body button:hover:not(:disabled) { background: #30405b !important; }
+body button:not(#fullscreen-toggle):not(#first-person-toggle):hover:not(:disabled) { background: #30405b !important; }
 body button:focus-visible { outline: 3px solid #ffe18c !important; outline-offset: 4px !important; }
 body button:disabled { opacity: .6 !important; cursor: not-allowed !important; }
 .defeat-screen { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 24px; background: #080706cc; color: #eee4cf; text-align: center; font-family: system-ui, sans-serif; }
