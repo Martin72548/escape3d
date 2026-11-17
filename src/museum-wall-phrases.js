@@ -42,8 +42,8 @@ export function addMuseumWallPhrases(parent) {
   const inscription = new THREE.Mesh(new THREE.PlaneGeometry(18, 5.2), material);
   inscription.name = 'Phrases sur le mur du fond';
   inscription.userData.phrases = phrases;
-  // Spread the four paragraphs down the wall, facing the entrance.
-  inscription.position.set(0, 3.05, -9.45);
+  // Place the text just in front of the niche's smooth recessed backing.
+  inscription.position.set(0, 3.05, -10.59);
   inscription.raycast = () => {};
   // Match the first paragraph's wrapped lines with a dedicated spell target.
   textBlocks.slice(0, 3).forEach((first, index) => {
