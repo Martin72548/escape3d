@@ -139,27 +139,27 @@ body button:disabled { opacity: .6 !important; cursor: not-allowed !important; }
 #lives-restart { margin-top: 14px; padding: 12px 20px; border: 0; border-radius: 12px; background: #825be5; color: white; font: inherit; font-weight: 800; cursor: pointer; }
 @media (max-width: 720px) { .player-lives { font-size: 22px; gap: 3px; } }
 
-.fullscreen-controls { position: fixed; left: 20px; bottom: 24px; z-index: 10; display: flex; flex-direction: column; gap: 8px; max-width: min(270px, 45vw); }
-#fullscreen-toggle { padding: 12px 16px; border: 1px solid #ffffff55; border-radius: 12px; background: #172033e8; color: white; font: 600 .9rem system-ui, sans-serif; cursor: pointer; box-shadow: 0 4px 18px #0005; }
-#fullscreen-toggle:hover { background: #30405b; }
+.fullscreen-controls { position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); z-index: 10; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; max-width: min(270px, 45vw); }
+#fullscreen-toggle { width: 48px; height: 48px; display: grid; place-items: center; padding: 8px; border: 1px solid #ffffff55; border-radius: 12px; background: #fffffff0; color: #080808; cursor: pointer; box-shadow: 0 4px 18px #0005; }
+#fullscreen-toggle:hover { background: #dedede; }
 #fullscreen-toggle:focus-visible { outline: 3px solid #ffe18c; outline-offset: 3px; }
 #fullscreen-toggle:disabled { opacity: .6; cursor: default; }
 #fullscreen-status { color: white; font: .85rem system-ui, sans-serif; text-shadow: 0 1px 3px black; }
 html:fullscreen .scene-toolbar { display: none; }
-@media (max-width: 600px) { .fullscreen-controls { left: 12px; bottom: 88px; max-width: 75vw; } }
+@media (max-width: 600px) { .fullscreen-controls { right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); max-width: 75vw; } }
 
 /* Score remains visible in the upper-right corner during play. */
-.view-controls { position: fixed; right: 18px; bottom: 88px; z-index: 10; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; max-width: min(330px, 70vw); }
-#first-person-toggle { padding: 12px 16px; border: 1px solid #ffffff55; border-radius: 12px; background: #172033e8; color: white; font: 600 .9rem system-ui, sans-serif; cursor: pointer; }
-#first-person-toggle:hover { background: #30405b; }
-#first-person-toggle[aria-pressed="true"] { border-color: #ffd08a; }
+.view-controls { position: fixed; right: calc(max(20px, env(safe-area-inset-right)) + 60px); bottom: max(20px, env(safe-area-inset-bottom)); z-index: 10; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; max-width: min(330px, 70vw); }
+#first-person-toggle { height: 48px; padding: 0 10px; border: 2px solid #000; border-radius: 8px; background: transparent; color: #000; font: 500 28px/1 "Arial Black", Arial, sans-serif; letter-spacing: 1px; cursor: pointer; }
+#first-person-toggle:hover { background: #ffffff25; }
+#first-person-toggle[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #000; }
 #first-person-toggle:focus-visible { outline: 3px solid #ffe18c; outline-offset: 3px; }
 #first-person-toggle:disabled { opacity: .6; cursor: default; }
-#first-person-hint { color: white; font: .8rem system-ui, sans-serif; text-shadow: 0 1px 3px black; text-align: right; }
-@media (max-width: 600px) { .view-controls { bottom: 160px; right: 12px; } }
-#scoreboard { position: fixed; top: 92px; right: 18px; z-index: 6; display: flex; align-items: center; gap: 14px; padding: 12px 18px; border: 1px solid rgba(255, 208, 138, .5); border-radius: 14px; background: rgba(29, 24, 48, .92); color: #ffd08a; box-shadow: 0 4px 20px #0005; pointer-events: none; }
-#scoreboard span { font-size: .85rem; font-weight: 700; }
-#score-value { font-size: 1.6rem; font-variant-numeric: tabular-nums; line-height: 1; }
+#first-person-hint { position: absolute; right: 0; bottom: 58px; width: min(330px, 70vw); color: white; font: .8rem system-ui, sans-serif; text-shadow: 0 1px 3px black; text-align: right; }
+@media (max-width: 600px) { .view-controls { bottom: max(12px, env(safe-area-inset-bottom)); right: calc(max(12px, env(safe-area-inset-right)) + 60px); } }
+#scoreboard { position: fixed; top: 92px; right: 18px; z-index: 6; display: flex; align-items: center; gap: 14px; padding: 12px 18px; border: 2px solid #fff36a; border-radius: 14px; background: transparent; color: #fff36a; box-shadow: 0 0 5px #fff9b0, 0 0 14px #ffdf00b3, inset 0 0 9px #ffdf0059; pointer-events: none; }
+#scoreboard span { font-size: .85rem; font-weight: 700; text-shadow: 0 0 5px #ffe600, 0 0 10px #ffc400; }
+#score-value { color: #ff3038; font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 3px #ffb1b1, 0 0 7px #ff1a24, 0 0 15px #ff0015, 0 0 24px #ff001599; }
 html:fullscreen #scoreboard { top: 18px; }
 @media (max-width: 720px) { #scoreboard { top: 150px; right: 12px; padding: 10px 14px; } }
 
