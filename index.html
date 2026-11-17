@@ -4,8 +4,8 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="description" content="Escena de realidad virtual creada con Three.js, WebXR y XR Components." />
-		<title>Proyecto de realidad virtual ? Diplomatura en tecnologias inmersivas UBA</title>
-
+		<title>Proyecto de realidad virtual ? Diplomatura en tecnologias inmersivas UBA</title>
+		<link rel="stylesheet" href="/src/styles.css" />
 		<script type="importmap">
 {
   "imports": {
@@ -15,11 +15,6 @@
   }
 }
 		</script>
-		<script type="module" crossorigin src="./assets/inicio-6DwKPduH.js"></script>
-		<link rel="modulepreload" crossorigin href="./assets/styles-BdPuBlwP.js">
-		<link rel="modulepreload" crossorigin href="./assets/fire-message-CqS6Z93u.js">
-		<link rel="modulepreload" crossorigin href="./assets/smoke-title-B9BWAEMr.js">
-		<link rel="stylesheet" crossorigin href="./assets/styles-DrT6SUwl.css">
 	</head>
 	<body class="scene-page">
 		<dialog id="dungeon-intro" aria-labelledby="dungeon-intro-title">
@@ -74,6 +69,10 @@
 			window.addEventListener('error', event => { if (event.message) window.showSceneError(event.error || event.message); });
 			window.addEventListener('unhandledrejection', event => window.showSceneError(event.reason));
 		</script>
-		
+		
+		<script type="module">
+			import('/src/main-vr.js').catch(window.showSceneError);
+		</script>
+		<script type="module" src="/src/smoke-title.js"></script>
 	</body>
 </html>

@@ -1,0 +1,24 @@
+{
+  "name": "plantilla-threejs-webxr",
+  "version": "1.0.0",
+  "description": "Plantilla educativa para crear aplicaciones 3D y WebXR con Three.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "dev:network": "vite --host 0.0.0.0",
+    "dev:vr": "vite preview --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.19.0",
+    "three": "^0.185.1",
+    "tweakpane": "^4.0.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "vite": "^8.0.9"
+  }
+}
