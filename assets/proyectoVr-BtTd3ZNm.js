@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./main-vr-CZijENPi.js","./OrbitControls-D-w-vKlJ.js","./fire-message-CqS6Z93u.js"])))=>i.map(i=>d[i]);
+import"./styles-BdPuBlwP.js";import{t as e}from"./smoke-title-B9BWAEMr.js";e(()=>import(`./main-vr-CZijENPi.js`),__vite__mapDeps([0,1,2]),import.meta.url).catch(window.showSceneError);
