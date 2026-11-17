@@ -219,5 +219,9 @@ export function createNoFaceEncounter(scene, prisoner, { direction = 1, openWall
 		targeted = false; hits++; emitSmoke();
 		if (hits >= 2) { defeated = true; wall.visible = false; }
 	}
-	return { spawn, update, target, release, defeat, root: wall, get hits() { return hits; }, get triggered() { return triggered; } };
+	function crush(root) {
+		if (root !== wall || defeated) return;
+		defeated = true; targeted = false; hits = 2; wall.visible = false;
+	}
+	return { spawn, update, target, release, defeat, crush, root: wall, get hits() { return hits; }, get triggered() { return triggered; } };
 }

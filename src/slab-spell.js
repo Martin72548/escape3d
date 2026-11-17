@@ -123,6 +123,8 @@ export function createSlabSpell(scene, prisoner) {
 		const broom = prisoner.getObjectByName('Escoba mágica del prisionero');
 		const strikeOrigin = (broom?.getObjectByName('broom-ground-contact') ?? broom)?.getWorldPosition(new THREE.Vector3()) ?? prisoner.localToWorld(new THREE.Vector3(0, 1, 0));
 		const insects = [
+			...allNoFaces.map(handler => ({ root: handler.root, encounter: handler, wallCreature: true })),
+			...catEncounter.cats.filter(toad => !toad.defeated).map(toad => ({ root: toad.root, encounter: catEncounter })),
 			...roachEncounter.roaches.filter(roach => !roach.defeated).map(roach => ({ root: roach.root, encounter: roachEncounter })),
 			...spiderEncounter.spiders.filter(spider => !spider.defeated).map(spider => ({ root: spider.root, encounter: spiderEncounter })),
 			{ root: scorpionEncounter.root, encounter: scorpionEncounter },
@@ -134,14 +136,19 @@ export function createSlabSpell(scene, prisoner) {
 			.sort((a, b) => a.distance - b.distance);
 
 		if (insects.length) {
-			const { root, encounter: handler } = insects[0];
+			const { root, encounter: handler, wallCreature } = insects[0];
 			if (handler.target(root)) {
-				handler.defeat(root);
+				if (handler.crush) handler.crush(root);
+				else handler.defeat(root);
 				scene.attach(root);
 				root.visible = true;
 				root.rotation.x = 0; root.rotation.z = 0;
 				root.scale.y = Math.min(root.scale.y, 0.09);
 				root.scale.x *= 1.15; root.scale.z *= 1.15;
+				if (wallCreature) {
+					root.rotation.set(-Math.PI / 2, 0, 0);
+					root.scale.set(1.15, 1.15, .09);
+				}
 				root.updateWorldMatrix(true, true);
 				const bounds = new THREE.Box3().setFromObject(root);
 				root.position.y += .035 - bounds.min.y;
