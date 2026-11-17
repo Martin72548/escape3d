@@ -242,6 +242,17 @@ export function createPrisoner() {
 		wand.visible = false;
 		broom.visible = true;
 		person.userData.broomMode = true;
+		person.userData.broomCrushedCount = 0;
+	};
+	person.userData.recordBroomCrush = () => {
+		if (!person.userData.broomMode) return;
+		person.userData.broomCrushedCount = (person.userData.broomCrushedCount ?? 0) + 1;
+		if (person.userData.broomCrushedCount >= 3) {
+			broom.visible = false;
+			person.userData.broomMode = false;
+			person.userData.broomLiftAmount = 0;
+			person.userData.broomStrikeAmount = 0;
+		}
 	};
 	let broomSwingAge = Infinity;
 	let broomImpact = null;

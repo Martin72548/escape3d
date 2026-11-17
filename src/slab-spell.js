@@ -128,7 +128,7 @@ export function createSlabSpell(scene, prisoner) {
 			{ root: scorpionEncounter.root, encounter: scorpionEncounter },
 			{ root: mantisEncounter.root, encounter: mantisEncounter },
 			...(foodTray.transformed ? [{ root: foodTray.greenBug, encounter: foodTray }] : []),
-		].filter(({ root }) => root.visible)
+		].filter(({ root }) => root.visible && !root.userData.broomCrushed)
 			.map(insect => ({ ...insect, distance: insect.root.getWorldPosition(new THREE.Vector3()).distanceTo(strikeOrigin) }))
 			.filter(insect => insect.distance <= 2.4)
 			.sort((a, b) => a.distance - b.distance);
@@ -137,16 +137,26 @@ export function createSlabSpell(scene, prisoner) {
 			const { root, encounter: handler } = insects[0];
 			if (handler.target(root)) {
 				handler.defeat(root);
+				scene.attach(root);
 				root.visible = true;
-				root.position.y = 0.035;
 				root.rotation.x = 0; root.rotation.z = 0;
 				root.scale.y = Math.min(root.scale.y, 0.09);
+				root.scale.x *= 1.15; root.scale.z *= 1.15;
+				root.updateWorldMatrix(true, true);
+				const bounds = new THREE.Box3().setFromObject(root);
+				root.position.y += .035 - bounds.min.y;
+				root.userData.broomCrushed = true;
+				delete root.userData.spellTarget;
+				prisoner.userData.recordBroomCrush?.();
 				return true;
 			}
 		}
 
 		const ant = foodTray.nearbyAnt(strikeOrigin);
-		if (ant && ant.point.distanceTo(strikeOrigin) <= 2.4) return foodTray.crushAnt(ant.mesh, ant.instanceId);
+		if (ant && ant.point.distanceTo(strikeOrigin) <= 2.4 && foodTray.crushAnt(ant.mesh, ant.instanceId)) {
+			prisoner.userData.recordBroomCrush?.();
+			return true;
+		}
 		return false;
 	}
 	function cast(hit) {
