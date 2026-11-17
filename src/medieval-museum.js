@@ -209,7 +209,7 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
   prisoner.position.set(0,.02,6);prisoner.rotation.set(0,Math.PI,0);
   scene.background=new THREE.Color(0x211c17);scene.fog=new THREE.Fog(0x211c17,20,45);
   build();scene.add(root);
-  showFireMessage('Chapelle du Saut p\u00e9rilleux.', { duration: 4, verticalPosition: .18 });
+  showFireMessage('Chapelle du saut p\u00e9rilleux\nGare aux statues !', { duration: 4, verticalPosition: .18, multiline: true, centered: true });
  }
  function updateStatueSequence(dt){
   if(prisoner.userData.dead||prisoner.userData.gameOver)return;
