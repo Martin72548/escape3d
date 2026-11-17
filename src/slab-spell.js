@@ -39,7 +39,16 @@ export function createSlabSpell(scene, prisoner) {
 		addPoint();
 	}
 	const ceramicBreak=createCeramicBreakSound();
- async function prepare() {}
+ async function prepare(renderer, camera) {
+  const preview = new THREE.Mesh(rayGeometry, rayMaterial);
+  preview.scale.setScalar(.000001);
+  preview.frustumCulled = false; preview.raycast = () => {};
+  scene.add(preview);
+  try {
+   if (renderer.compileAsync) await renderer.compileAsync(scene, camera);
+   else renderer.compile(scene, camera);
+  } finally { preview.removeFromParent(); }
+ }
  function unlockAudio() {
 	ceramicBreak.unlock();wallBricksSound.unlock();
   encounter.unlockAudio();batEncounter.unlockAudio();catEncounter.unlockAudio();
@@ -70,19 +79,20 @@ export function createSlabSpell(scene, prisoner) {
 	const addHole = createSlabHoles(scene);
 	const matrix = new THREE.Matrix4();
 	const activeRays = [];
+	const rayGeometry = new THREE.CylinderGeometry(0.012, 0.045, 1, 8, 1, true);
+	const rayMaterial = new THREE.MeshBasicMaterial({ color: 0x8cecff, transparent: true, opacity: 0.92, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+	// Keep the light count stable so firing does not recompile the dungeon materials.
+	const rayFlash = new THREE.PointLight(0x62dfff, 0, 1.8);
+	scene.add(rayFlash);
 	function emitRay(point) {
 		prisoner.userData.castWand?.(point);
-		const ray = new THREE.Mesh(
-			new THREE.CylinderGeometry(0.012, 0.045, 1, 8, 1, true),
-			new THREE.MeshBasicMaterial({ color: 0x8cecff, transparent: true, opacity: 0.92, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
-		);
+		const ray = new THREE.Mesh(rayGeometry, rayMaterial.clone());
 		ray.name = 'Rayo mágico del prisionero';
 		syncHandSpellRay(ray, prisoner, point);
 		ray.frustumCulled = false;
 		scene.add(ray);
-		const flash = new THREE.PointLight(0x62dfff, 4, 1.8);
+		const flash = rayFlash; flash.intensity = 4;
 		flash.position.copy(point);
-		scene.add(flash);
 		activeRays.push({ ray, flash, target: point.clone(), life: 0.18 });
 	}
 	function updateRays() {
@@ -282,13 +292,13 @@ export function createSlabSpell(scene, prisoner) {
    const effect = activeRays[index];
    effect.life -= dt;
    effect.ray.material.opacity = Math.max(0, effect.life / 0.18);
-   effect.flash.intensity = Math.max(0, 4 * effect.life / 0.18);
    if (effect.life <= 0) {
-    scene.remove(effect.ray, effect.flash);
-    effect.ray.geometry.dispose(); effect.ray.material.dispose();
+    scene.remove(effect.ray);
+    effect.ray.material.dispose();
     activeRays.splice(index, 1);
    }
   }
+  rayFlash.intensity = activeRays.length ? 4 * Math.max(...activeRays.map(effect => Math.max(0, effect.life))) / .18 : 0;
   updateWallFragments(scene,dt);
 		cobraEncounter.update(dt);
 		komodoEncounter.update(dt);
