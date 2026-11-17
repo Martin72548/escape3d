@@ -1,0 +1,90 @@
+import { createRealisticTorch } from './realistic-torch.js';
+import { createMedievalMuseum } from './medieval-museum.js';
+import { createDungeonExit } from './dungeon-exit.js';
+import { createSlabSpell } from './slab-spell.js';
+import { createPrisoner } from './prisoner.js';
+import { installPrisonerSleep } from './prisoner-sleep.js';
+import { hideKeyUnderSlab } from './hidden-key.js';
+import * as THREE from 'three';
+import { createStoneMaterial, addStoneCourses } from './stone-masonry.js';
+import { createMedievalFloorMaterial } from './medieval-floor-material.js';
+import { addOvalMirror } from './oval-mirror.js';
+import { addAncientKeyMarks } from './ancient-key-marks.js';
+
+export function addSceneContent(scene) {
+	scene.background = new THREE.Color(0x191817);
+	scene.fog = new THREE.Fog(0x191817, 16, 32);
+	scene.add(new THREE.HemisphereLight(0xb5bac2, 0x383024, 0.9));
+	const stoneMaterial = createStoneMaterial();
+	const floorMaterial = createMedievalFloorMaterial();
+	let masonrySeed = 100;
+	let floorStones;
+	const wallStones = [];
+	function masonry(width, height, x, y, z, rotationX = 0, rotationY = 0) {
+		const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshStandardMaterial({ color: 0x34312b, roughness: 1 }));
+		mesh.position.set(x, y, z);
+		mesh.rotation.set(rotationX, rotationY, 0);
+		mesh.receiveShadow = true;
+		scene.add(mesh);
+		const stones = addStoneCourses(scene, rotationX < 0 ? floorMaterial : stoneMaterial, width, height, x, y, z, rotationX, rotationY, masonrySeed++, width === height, { jointed: rotationX < 0 });
+		if (rotationX < 0) floorStones = stones;
+		if (rotationX === 0) wallStones.push(stones);
+		if (rotationX < 0) mesh.material.color.set(0x211c16);
+		if (x === 10 && height === 6) {
+			mesh.userData.spellTarget = stones.userData.spellTarget = 'right-wall';
+		}
+		if (x === -10 && height === 6) mesh.userData.spellTarget = stones.userData.spellTarget = 'troll-wall';
+		if (z === -10 && height === 6) mesh.userData.spellTarget = stones.userData.spellTarget = 'komodo-wall';
+		if (z === -10 && height === 6 && x > 0) mesh.userData.spellTarget = stones.userData.spellTarget = 'cobra-wall';
+		if (z === 10 && height === 6) mesh.userData.spellTarget = stones.userData.spellTarget = 'mummy-wall';
+		if(z===-10&&width===2.4&&height===2.4)mesh.userData.spellTarget=stones.userData.spellTarget='door-overhead';
+		return mesh;
+	}
+	const floor = masonry(20, 20, 0, 0, 0, -Math.PI / 2);
+	floor.name = 'floor';
+	const floorGeometry = floor.geometry;
+	// The locomotion toolkit consumes geometry in world coordinates.
+	const teleportGeometry = floorGeometry.clone().rotateX(-Math.PI / 2);
+	masonry(8.8, 6, -5.6, 3, -10);
+	masonry(8.8, 6, 5.6, 3, -10);
+	masonry(2.4, 2.4, 0, 4.8, -10);
+	masonry(20, 6, -10, 3, 0, 0, Math.PI / 2);
+	masonry(20, 6, 10, 3, 0, 0, -Math.PI / 2);
+	masonry(20, 6, 0, 3, 10, 0, Math.PI);
+	masonry(20, 20, 0, 6, 0, Math.PI / 2);
+	addOvalMirror(scene);
+
+ const dungeonExit = createDungeonExit(scene, stoneMaterial);
+ const torches=[];
+ for(const x of [-6,6])for(const z of [-9.65,9.65])torches.push(createRealisticTorch(scene,{position:[x,3,z],rotationY:z<0?0:Math.PI,intensity:32,seed:torches.length+1,interactive:true}));
+	const grid = new THREE.GridHelper(20, 20, 0x60708a, 0xaab7c8);
+	grid.name = 'scene-grid';
+	grid.position.y = 0.006;
+	grid.visible = false;
+	scene.add(grid);
+	const axes = new THREE.AxesHelper(2.5);
+	axes.name = 'scene-axes';
+	axes.position.y = 0.012;
+	axes.visible = false;
+	scene.add(axes);
+	const prisoner = createPrisoner();
+	prisoner.scale.setScalar(2);
+	prisoner.position.set(-3, 0.02, -1);
+	scene.add(prisoner);
+	const movableObjects = [];
+	const slabSpell = createSlabSpell(scene, prisoner);
+	const museum = createMedievalMuseum(scene, prisoner,()=>slabSpell.addPoint());
+	installPrisonerSleep(prisoner);
+	function onSceneClick(hit) {
+		if (prisoner.userData.sleeping || prisoner.userData.wakingUp) return;
+		for(let object=hit?.mesh;object;object=object.parent)if(object.userData.returnToStart){window.location.reload();return;}
+		dungeonExit.unlockAudio();
+		if (museum.active) { museum.cast(hit); return; }
+		if (hit.target?.userData.spellTarget === 'exit-passage' && dungeonExit.opened) { slabSpell.batEncounter.stopAudio(); slabSpell.catEncounter.stopAudio(); museum.enter(); return; }
+		slabSpell.cast(hit);
+	}
+	const revealKey = hideKeyUnderSlab(scene, new THREE.Vector3(3.4, 0, -1), dungeonExit.open);
+	addAncientKeyMarks(floorStones, wallStones);
+	function updateHiddenKey(dt = 0) { if (museum.active) return; torches.forEach(torch=>torch.update(dt)); revealKey(slabSpell.score, dt); dungeonExit.update(dt); }
+	return { floor, floorGeometry: teleportGeometry, grid, axes, movableObjects, updateHiddenKey, slabSpell, prisoner, museum, onSceneClick };
+}
