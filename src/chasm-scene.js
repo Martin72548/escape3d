@@ -1,12 +1,13 @@
 import { isStandingOnGoalCross } from './goal-cross.js';
 import { addTrunkWords } from './trunk-words.js';
+import { createTrunkWordPickup } from './trunk-word-pickup.js';
 import { createChasmFall } from './chasm-fall.js';
 import { createChasmVictory } from './chasm-victory.js';
 import { createHarpyFlock } from './harpy-flock.js';
 import { createChasmRockMaterial, createChasmRiver } from './chasm-river.js';
 import * as THREE from 'three';
 
-export function buildChasmScene(scene,prisoner){
+export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  const root=new THREE.Group();root.name='Nivel 4 - Precipicio y puente de tronco';root.userData.dimensions={width:35,length:35};scene.add(root);
  const cliffStone=createChasmRockMaterial(),stone=cliffStone.clone();stone.vertexColors=false;
  const earth=new THREE.MeshStandardMaterial({color:0x534d3c,roughness:1});
@@ -101,7 +102,8 @@ export function buildChasmScene(scene,prisoner){
   if(touched){birds.select(flight);fall.begin(flight.direction);}
  }
  let age=0;
+ const wordPickup=createTrunkWordPickup(prisoner,root.userData.wordsReady,onPointEarned,()=>fall.active||victory.active||prisoner.userData.dead||prisoner.userData.gameOver);
  return {root,trunk,river,birds,victory,fall,goalCross,update(dt){age+=dt;river.update(dt);const previous=birds.flights.map(flight=>({position:flight.bird.position.clone(),pass:flight.pass}));birds.update(dt);birds.flights.forEach((flight,index)=>checkBirdContact(flight,flight.pass!==previous[index].pass?flight.bird.position:previous[index].position));fall.update(dt);
  if(!victory.active&&!fall.active&&isStandingOnGoalCross(prisoner,goalCross)){birds.stop();victory.start();}
- victory.update(dt);mist.forEach((layer,i)=>layer.position.x=Math.sin(age*.08+i)*2);}};
+ wordPickup.update(dt);victory.update(dt);mist.forEach((layer,i)=>layer.position.x=Math.sin(age*.08+i)*2);}};
 }

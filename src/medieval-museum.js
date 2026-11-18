@@ -174,7 +174,7 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
    chant.stop();
    for(const object of scene.children){if(object===prisoner||object.isCamera||object.name.startsWith('XR')||object.name.includes('controller'))continue;object.visible=false;}
    shots.length=0;pending=null;prisoner.userData.currentLevel=3;lowerChamber=buildLowerChamber(scene,prisoner,()=>{
-    shots.length=0;pending=null;lowerChamber.root.visible=false;chasm=buildChasmScene(scene,prisoner);
+    shots.length=0;pending=null;lowerChamber.root.visible=false;chasm=buildChasmScene(scene,prisoner,()=>onPointEarned());
    },()=>onPointEarned());
   });
   const lucia=pedestal(6,-4,'Santa Lucia azul con halo',0x648dcc);robe(lucia.figure,lucia.material);face(lucia.figure,lucia.material);
