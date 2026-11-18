@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 export function addMuseumWallPhrases(parent) {
   const phrases = [
-    "L'herboriste du monastère, à l'heure des vêpres, va apporter du romarin et un thé citronné ...",
+    "L'herboriste du monastère, à l'heure des vêpres, va apporter du romarin et un thé citronné à l’abbé malade dans sa cellule.",
     'Pendant le banquet, le très noble seigneur de Noirmoutier, d’un air solennel, prodigue des bienfaits à ses nobles barons assis autour de lui.',
     'Près de l’arcade principale, une vieille mendiante supplie le prince héritier de lui donner quelques deniers pour pouvoir manger.',
     'À l’ombre des remparts de l’ancienne forteresse, le vieux conseiller du roi, malgré les protestations véhémentes des courtisans réunis dans la grande salle, remet discrètement un parchemin scellé au jeune messager chargé de prévenir les habitants du village avant la tombée de la nuit.',
@@ -42,8 +42,8 @@ export function addMuseumWallPhrases(parent) {
   const inscription = new THREE.Mesh(new THREE.PlaneGeometry(18, 5.2), material);
   inscription.name = 'Phrases sur le mur du fond';
   inscription.userData.phrases = phrases;
-  // Place the text just in front of the niche's smooth recessed backing.
-  inscription.position.set(0, 3.05, -10.59);
+  // Keep all phrases and their spell targets in front of the six stone faces.
+  inscription.position.set(0, 3.05, -9.53);
   inscription.raycast = () => {};
   // Match the first paragraph's wrapped lines with a dedicated spell target.
   textBlocks.slice(0, 3).forEach((first, index) => {
