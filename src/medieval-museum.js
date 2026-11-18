@@ -1,3 +1,4 @@
+import { translate } from './language.js';
 import { addMuseumBackWall } from './museum-back-wall.js';
 import { addMedievalVault } from './medieval-vault.js';
 import { createMuseumBatSwarm } from './museum-bat-swarm.js';
@@ -19,7 +20,7 @@ import { createDenisAttack } from './saint-denis-attack.js';
 import { addSaintSebastian } from './saint-sebastian.js';
 import { createSebastianAttack } from './saint-sebastian-attack.js';
 import { addTripalium } from './tripalium.js';
-import { addSaintLucia, preloadSaintLucia } from './saint-lucia.js';
+import { addFallbackLuciaHair, addSaintLucia, preloadSaintLucia } from './saint-lucia.js';
 import { createLuciaHaloAttack } from './lucia-halo-attack.js';
 import { addSaintGeorge } from './saint-george.js';
 import { createGeorgeEncounter } from './saint-george-encounter.js';
@@ -89,7 +90,14 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
  function emitShot(shot){
    spellRays.emit(shot.point);
    if(shot.isWhiteBat){batSwarm.hitWhite();return;}
-   if(shot.isBatPhrase){batSwarm.trigger();return;}
+   if(shot.isBatPhrase){
+    if(batSwarm.trigger()){
+     showFireMessage(translate('Tue la chauve-souris blanche !', '¡Mata al murciélago blanco!'), {
+      duration: 4, verticalPosition: .24, centered: true, multiline: true,
+     });
+    }
+    return;
+   }
    if(shot.isHorsePhrase){goldenSerpent.trigger();return;}
    if(shot.isSerpent){goldenSerpent.hit();return;}
    if(shot.isExitPhrase){shots.length=0;tombPassage.trigger();return;}
@@ -179,6 +187,7 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
    },()=>onPointEarned());
   });
   const lucia=pedestal(6,-4,'Santa Lucia azul con halo',0x648dcc);robe(lucia.figure,lucia.material);face(lucia.figure,lucia.material);
+  addFallbackLuciaHair(lucia.figure);
   lucia.figure.userData.appearanceReady=addSaintLucia(lucia.figure).catch(error=>console.warn('No se pudo cargar Santa Lucia:',error));
   lucia.figure.userData.museumLucia=true;luciaAttack=createLuciaHaloAttack(scene,lucia.figure,prisoner);
   const george=pedestal(0,-7.5,'San Jorge sobre caballo encabritado',0x4f6257);addSaintGeorge(george.figure);
@@ -202,7 +211,7 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
   prisoner.position.set(0,.02,6);prisoner.rotation.set(0,Math.PI,0);
   scene.background=new THREE.Color(0x211c17);scene.fog=new THREE.Fog(0x211c17,20,45);
   build();scene.add(root);
-  showFireMessage('Chapelle du saut p\u00e9rilleux\nGare aux statues !', { duration: 4, verticalPosition: .18, multiline: true, centered: true });
+  showFireMessage(translate('Chapelle du saut périlleux\nGare aux statues !', 'Capilla del salto peligroso\n¡Cuidado con las estatuas!'), { duration: 4, verticalPosition: .18, multiline: true, centered: true });
  }
  function updateStatueSequence(dt){
   if(prisoner.userData.dead||prisoner.userData.gameOver)return;

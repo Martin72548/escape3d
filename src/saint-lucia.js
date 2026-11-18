@@ -1,9 +1,12 @@
 import { publicAssetBase } from './public-asset-base.js';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
 
 export function addFittedLuciaHair(root, model) {
-	root.updateWorldMatrix(true,true);
+	root.updateWorldMatrix(true,false);
+	// SkinnedMesh updates its inverse bind matrix through updateMatrixWorld.
+	root.updateMatrixWorld(true);
 	const bounds=new THREE.Box3(),point=new THREE.Vector3();
 	const inverse=root.matrixWorld.clone().invert();
 	let headBone;
@@ -24,23 +27,42 @@ export function addFittedLuciaHair(root, model) {
 		}
 	});
 	if(bounds.isEmpty())throw Error('Impossible de mesurer la tete de sainte Lucie');
+	const hair = makeLuciaHair(root, bounds);
+	if(headBone)headBone.attach(hair);
+	return hair;
+}
+
+export function addFallbackLuciaHair(figure) {
+	return makeLuciaHair(figure, new THREE.Box3(
+		new THREE.Vector3(-.19, 1.75, -.18),
+		new THREE.Vector3(.19, 2.25, .18),
+	));
+}
+
+function makeLuciaHair(root, bounds) {
 	const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
 	const hair=new THREE.Group();hair.name='Chevelure ajustee au crane de sainte Lucie';root.add(hair);
-	const material=new THREE.MeshStandardMaterial({color:0x322017,roughness:.8,side:THREE.DoubleSide});
+	const material=new THREE.MeshStandardMaterial({color:0x362219,roughness:.96,side:THREE.DoubleSide});
 	const rx=size.x*.56,ry=size.y*.52,rz=size.z*.55;
 	const crownY=bounds.min.y+size.y*.6,cz=center.z-size.z*.075;
 	const cap=new THREE.Mesh(new THREE.SphereGeometry(1,48,32,0,Math.PI*2,0,Math.PI*.53),material);
 	cap.position.set(center.x,crownY,cz);cap.scale.set(rx,ry,rz);hair.add(cap);
 	for(let i=0;i<44;i++){
 		const angle=Math.PI*.43+i/43*Math.PI*1.14,points=[];
-		for(let j=0;j<12;j++){
-			const t=j/11;
-			points.push(new THREE.Vector3(center.x+Math.sin(angle)*(rx*.96+.014*Math.sin(t*Math.PI))+.004*Math.sin(t*10+i),bounds.max.y-.025-t*(size.y+ .26+.025*Math.sin(i)),cz+Math.cos(angle)*rz-.025*t));
+		for(let j=0;j<=20;j++){
+			const t=j/20;
+			const polar=THREE.MathUtils.lerp(.65,Math.PI/2,Math.min(1,t/.4));
+			const fall=Math.max(0,(t-.4)/.6);
+			const wave=Math.sin(fall*Math.PI)*(size.x*.065);
+			points.push(new THREE.Vector3(
+				center.x+Math.sin(angle)*(rx*Math.sin(polar)+wave),
+				crownY+ry*Math.cos(polar)-fall*(size.y+.14+.024*Math.sin(i)),
+				cz+Math.cos(angle)*(rz*Math.sin(polar)+wave)-.018*fall,
+			));
 		}
-		const lock=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),28,.012,7,false),material);hair.add(lock);
+		const lock=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),28,.008,7,false),material);hair.add(lock);
 	}
 	hair.traverse(part=>{if(part.isMesh){part.castShadow=part.receiveShadow=true;part.frustumCulled=false;}});
-	root.updateWorldMatrix(true,true);if(headBone)headBone.attach(hair);
 	hair.userData.fittedHeadBounds={min:bounds.min.toArray(),max:bounds.max.toArray()};
 	return hair;
 }
@@ -49,9 +71,7 @@ let preparedAssets;
 export function preloadSaintLucia() {
 	if (!preparedAssets) {
 		const loader = new GLTFLoader();
-		preparedAssets = Promise.all([
-			loader.loadAsync(`${publicAssetBase}models/prisoner/base_body.glb`),
-		]);
+		preparedAssets = loader.loadAsync(`${publicAssetBase}models/prisoner/base_body.glb`);
 		preparedAssets.catch(() => { preparedAssets = null; });
 	}
 	return preparedAssets;
@@ -61,14 +81,16 @@ export async function addSaintLucia(parent) {
 	const fallback=[...parent.children];
 	parent.name='Santa Lucia con vestido azul y halo dorado';
 	const root=new THREE.Group();root.name='Santa Lucia de rostro humano';root.scale.setScalar(1.28);root.visible=false;parent.add(root);
-	const assets=await preloadSaintLucia();
+	const asset=await preloadSaintLucia();
+	const model=cloneSkeleton(asset.scene);
+	root.add(model);
 	const armRigs=[];
-	for(const asset of assets){
-		if(!asset)continue;
-		const model=asset.scene;root.add(model);const meshes=[];model.traverse(object=>{if(object.isMesh)meshes.push(object);});
+	{
+		const meshes=[];model.traverse(object=>{if(object.isMesh)meshes.push(object);});
 		for(const mesh of meshes){
 			mesh.castShadow=mesh.receiveShadow=true;mesh.frustumCulled=false;
 			if(mesh.morphTargetInfluences){mesh.morphTargetInfluences.fill(0);const i=mesh.morphTargetDictionary.gender_female;if(i!==undefined)mesh.morphTargetInfluences[i]=.85;}
+			mesh.material=Array.isArray(mesh.material)?mesh.material.map(material=>material.clone()):mesh.material.clone();
 			for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material]){
 				if(material.map)material.map.anisotropy=8;
 				if(material.name==='Skin'){material.roughness=.65;material.normalScale?.set(.6,.6);}
@@ -109,7 +131,7 @@ export async function addSaintLucia(parent) {
 			model.updateWorldMatrix(true,true);
 		}
 	}
-	addFittedLuciaHair(root, assets[0].scene);
+	addFittedLuciaHair(root, model);
 	const size=128,data=new Uint8Array(size*size*4);
 	for(let y=0;y<size;y++)for(let x=0;x<size;x++){const v=168+Math.sin(x*Math.PI)*9+Math.cos(y*Math.PI)*9+Math.sin(x*.3+y*.12)*4;data.set([v,v,v,255],(y*size+x)*4);}
 	const weave=new THREE.DataTexture(data,size,size);weave.wrapS=weave.wrapT=THREE.RepeatWrapping;weave.repeat.set(3,5);weave.magFilter=weave.minFilter=THREE.LinearFilter;weave.needsUpdate=true;
