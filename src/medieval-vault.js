@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { publicAssetBase } from './public-asset-base.js';
 
 export function addMedievalVault(parent, stoneMaterial) {
   const root = new THREE.Group(); root.name = 'Voute gothique medievale a croisees d ogives'; parent.add(root);
@@ -66,6 +67,22 @@ export function addMedievalVault(parent, stoneMaterial) {
     for(let i=0;i<=96;i++){const x=-10+i/96*20;p.push(x,5.8,z,x,height(x),z);if(i<96){const a=i*2;idx.push(a,a+1,a+2,a+2,a+1,a+3);}}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();
     const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x938873,roughness:1,side:THREE.DoubleSide}));m.receiveShadow=true;root.add(m);
+    if(z===-10){
+      const uv=[];
+      for(let i=0;i<=96;i++){
+        const x=-10+i/96*20;
+        uv.push(i/96,0,i/96,(height(x)-5.8)/(height(0)-5.8));
+      }
+      const frescoGeometry=g.clone();
+      frescoGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+      const frescoMaterial=new THREE.MeshStandardMaterial({color:0xd6c7ac,roughness:1,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+      const fresco=new THREE.Mesh(frescoGeometry,frescoMaterial);
+      fresco.name='Fresque sacree medievale au-dessus des phrases';fresco.position.z=.025;fresco.receiveShadow=true;root.add(fresco);
+      new THREE.TextureLoader().load(`${publicAssetBase}textures/medieval-sacred-fresco.png`,texture=>{
+        texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;
+        frescoMaterial.map=texture;frescoMaterial.color.set(0xffffff);frescoMaterial.needsUpdate=true;
+      },undefined,error=>console.warn('Fresque medievale indisponible :',error));
+    }
   }
   return root;
 }
