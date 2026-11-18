@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 import { publicAssetBase } from './public-asset-base.js';
 ﻿// Recorded ceramic tile break by Fission9 (CC0). See public/audio/SOURCES.md.
 export function createCeramicBreakSound(){
@@ -7,7 +8,7 @@ export function createCeramicBreakSound(){
  function unlock(){try{const Audio=globalThis.AudioContext||globalThis.webkitAudioContext;if(!Audio)return;context??=new Audio();context.resume()?.catch(()=>{});ready??=file.then(data=>context.decodeAudioData(data));ready.catch(()=>{});}catch{}}
  async function play(){
   unlock();if(!context)return;
-  try{const buffer=await ready;if(context.state!=='running')return;const source=context.createBufferSource(),gain=context.createGain();source.buffer=buffer;gain.gain.value=.85;source.connect(gain).connect(context.destination);source.onended=()=>{source.disconnect();gain.disconnect();};source.start();}catch{}
+  try{const buffer=await ready;if(context.state!=='running')return;const source=context.createBufferSource(),gain=context.createGain();source.buffer=buffer;gain.gain.value=.85;source.connect(gain).connect(getGameAudioOutput(context));source.onended=()=>{source.disconnect();gain.disconnect();};source.start();}catch{}
  }
  return {unlock,play};
 }

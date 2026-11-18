@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 import { publicAssetBase } from './public-asset-base.js';
 // Recorded falling debris by iwanPlays, Freesound #567249, CC0. See public/audio/SOURCES.md.
 export function createFallingBricksSound() {
@@ -26,7 +27,7 @@ export function createFallingBricksSound() {
    gain.gain.setValueAtTime(.85, now);
    gain.gain.setValueAtTime(.85, now + Math.max(0, duration - .12));
    gain.gain.linearRampToValueAtTime(0, now + duration);
-   source.connect(gain).connect(context.destination);
+   source.connect(gain).connect(getGameAudioOutput(context));
    source.onended = () => { source.disconnect(); gain.disconnect(); };
    source.start(now, 0, duration);
   } catch (error) { console.warn('No se pudo reproducir la caida de ladrillos:', error); }

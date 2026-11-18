@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 import { publicAssetBase } from './public-asset-base.js';
 // Recorded boomerang effect by juanricardom, CC0. See audio/SOURCES.md.
 export function createHaloBoomerangSound(){
@@ -37,7 +38,7 @@ export function createHaloBoomerangSound(){
    const source=context.createBufferSource(),gain=context.createGain();source.buffer=clip.buffer;
    const length=Math.min(clip.duration,2.2),now=context.currentTime;
    gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(2.4,now+.015);gain.gain.setValueAtTime(2.4,now+Math.max(.02,length-.12));gain.gain.linearRampToValueAtTime(0,now+length);
-   source.connect(gain).connect(context.destination);active.add(source);
+   source.connect(gain).connect(getGameAudioOutput(context));active.add(source);
    source.onended=()=>{active.delete(source);source.disconnect();gain.disconnect();};source.start(now,clip.offset,length);
   }catch(error){console.warn('No se pudo reproducir el boomerang:',error);}
  }

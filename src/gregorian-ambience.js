@@ -1,10 +1,11 @@
 import { publicAssetBase } from './public-asset-base.js';
+import { createGameAudio } from './game-audio.js';
 ﻿// Ave Maria, Schola Gregoriana (Oltarzew), CC BY-SA 3.0. See audio/SOURCES.md.
 export function createGregorianAmbience(){
  let player=null,wanted=false;
  const source=`${publicAssetBase}audio/gregorian-male-ave-maria.ogg`;
  function unlock(){
-  if(!player){player=new Audio(source);player.preload='auto';player.loop=true;player.volume=1;player.addEventListener('error',()=>console.error('No se pudo cargar el audio:',source,player.error));}
+  if(!player){player=createGameAudio(source);player.preload='auto';player.loop=true;player.volume=1;player.addEventListener('error',()=>console.error('No se pudo cargar el audio:',source,player.error));}
   if(player.readyState===0)player.load();
  }
  async function start(){

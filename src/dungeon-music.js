@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 // Original 48-second dark ambient score, synthesized locally without downloads.
 export function createDungeonMusic() {
   let context, master, started = false, stopped = false;
@@ -25,7 +26,7 @@ export function createDungeonMusic() {
       const output = context.createGain(), filter = context.createBiquadFilter();
       master = context.createGain(); master.gain.value = 1;
       filter.type = 'lowpass'; filter.frequency.value = 1800;
-      master.connect(filter).connect(output).connect(context.destination);
+      master.connect(filter).connect(output).connect(getGameAudioOutput(context));
       output.gain.setValueAtTime(0, begin);
       output.gain.linearRampToValueAtTime(.8, begin + 3);
       output.gain.setValueAtTime(.8, end - 5);
@@ -40,7 +41,7 @@ export function createDungeonMusic() {
         tone([440,466.16,329.63,415.3][bar % 4], at + .5, Math.min(3.4, end - at - .5), .035);
       }
       const finish = context.createOscillator(), silence = context.createGain();
-      silence.gain.value = 0; finish.connect(silence).connect(context.destination);
+      silence.gain.value = 0; finish.connect(silence).connect(getGameAudioOutput(context));
       finish.onended = () => { finish.disconnect(); silence.disconnect(); output.disconnect(); filter.disconnect(); master.disconnect(); };
       finish.start(begin); finish.stop(end + .01);
     } catch (error) { console.warn('Musique du donjon indisponible :', error); }

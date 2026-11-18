@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 import { publicAssetBase } from './public-asset-base.js';
 // One real husky howl, recorded by simcotter (Freesound #115357, CC0).
 // Original source and excerpt details: public/audio/SOURCES.md.
@@ -28,7 +29,7 @@ export function createCageReleaseSound(){
    gain.gain.linearRampToValueAtTime(.95,now+.06);
    gain.gain.setValueAtTime(.95,now+duration-.25);
    gain.gain.linearRampToValueAtTime(0,now+duration);
-   source.connect(gain).connect(context.destination);
+   source.connect(gain).connect(getGameAudioOutput(context));
    source.onended=()=>{source.disconnect();gain.disconnect();pending=false;onFinished();};
    source.start(now,offset,duration);
   }).catch(error=>{

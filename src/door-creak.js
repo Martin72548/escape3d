@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 // A slow, uneven hinge squeal with wood friction, generated locally.
 export function createDoorCreak() {
 	let context;
@@ -34,7 +35,7 @@ export function createDoorCreak() {
 		filter.frequency.value = 2400;
 		const gain = context.createGain();
 		gain.gain.value = .42;
-		source.connect(filter).connect(gain).connect(context.destination);
+		source.connect(filter).connect(gain).connect(getGameAudioOutput(context));
 		source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
 		source.start(now);
 	}

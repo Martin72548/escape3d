@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 import { publicAssetBase } from './public-asset-base.js';
 // Performed male choking vocal by Drkvixn91, CC0. See audio/SOURCES.md.
 export function createChokedCrySound(){
@@ -37,7 +38,7 @@ export function createChokedCrySound(){
    const source=context.createBufferSource(),gain=context.createGain();source.buffer=clip.buffer;
    const length=Math.min(clip.duration,4.35),now=context.currentTime;
    gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(.85,now+.015);gain.gain.setValueAtTime(.85,now+Math.max(.02,length-.12));gain.gain.linearRampToValueAtTime(0,now+length);
-   source.connect(gain).connect(context.destination);active.add(source);
+   source.connect(gain).connect(getGameAudioOutput(context));active.add(source);
    source.onended=()=>{active.delete(source);source.disconnect();gain.disconnect();};source.start(now,clip.offset,length);
   }catch(error){console.warn('No se pudo reproducir el grito ahogado:',error);}
  }

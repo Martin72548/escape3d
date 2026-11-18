@@ -2,6 +2,7 @@ import { spawnWallFragments } from './wall-fragments.js';
 import { wallBricksSound } from './falling-bricks-sound.js';
 import * as THREE from 'three';
 import { createZombieGrowl } from './zombie-growl.js';
+import { createKomodoSkin } from './komodo-skin.js';
 
 export function createKomodoEncounter(scene, prisoner) {
 	const roar = createZombieGrowl();
@@ -10,18 +11,17 @@ export function createKomodoEncounter(scene, prisoner) {
 	root.userData.spellTarget = 'komodo';
 	root.visible = false;
 	scene.add(root);
-	const skin = new THREE.MeshStandardMaterial({ color: 0x626348, roughness: .97, flatShading: true });
-	const belly = new THREE.MeshStandardMaterial({ color: 0x939077, roughness: 1 });
+	const { skin, belly } = createKomodoSkin();
 	const dark = new THREE.MeshStandardMaterial({ color: 0x201c15, roughness: .8 });
 	const tongueMaterial = new THREE.MeshStandardMaterial({ color: 0xb77386, roughness: .65 });
 	function oval(parent, material, x, y, z, sx, sy, sz) {
-		const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), material);
+		const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 22), material);
 		mesh.position.set(x, y, z); mesh.scale.set(sx, sy, sz);
 		mesh.castShadow = mesh.receiveShadow = true; parent.add(mesh); return mesh;
 	}
 	function bone(parent, start, end, r1, r2, material) {
 		const a = new THREE.Vector3(...start), b = new THREE.Vector3(...end), direction = b.clone().sub(a);
-		const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, direction.length(), 10), material);
+		const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, direction.length(), 20), material);
 		mesh.position.copy(a).add(b).multiplyScalar(.5);
 		mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
 		mesh.castShadow = true; parent.add(mesh); return mesh;
@@ -35,14 +35,27 @@ export function createKomodoEncounter(scene, prisoner) {
 	oval(head, dark, 0, -.035, .28, .205, .025, .34);
 	const jawPivot = new THREE.Group(); jawPivot.position.set(0, -.025, -.06); head.add(jawPivot);
 	oval(jawPivot, belly, 0, -.065, .3, .21, .065, .38);
-	const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0xff5826, emissive: 0xa52208, emissiveIntensity: .8, roughness: .4 });
+	const eyeMaterial = new THREE.MeshPhysicalMaterial({ color: 0x9a742f, roughness: .18, clearcoat: 1, clearcoatRoughness: .06 });
+	const wet = new THREE.MeshPhysicalMaterial({ color: 0x392824, roughness: .23, clearcoat: .65 });
+	const pupil = new THREE.MeshPhysicalMaterial({ color: 0x080906, roughness: .12, clearcoat: 1 });
+	const glint = new THREE.MeshBasicMaterial({ color: 0xf2e5c0 });
+	oval(head, skin, 0, .105, .43, .18, .105, .26);
+	oval(head, wet, 0, -.044, .49, .185, .009, .17);
 	for (const side of [-1, 1]) {
 		oval(head, skin, side * .19, .15, .05, .085, .075, .14);
 		oval(head, eyeMaterial, side * .235, .155, .12, .028, .04, .05);
 		const brow = oval(head, skin, side * .235, .205, .15, .065, .035, .16);
 		brow.rotation.x = -.35; brow.rotation.z = -side * .4;
-		oval(head, dark, side * .253, .155, .14, .012, .026, .025);
-		oval(head, dark, side * .12, .095, .56, .026, .018, .014);
+		oval(head, pupil, side * .258, .155, .14, .009, .024, .023);
+		oval(head, glint, side * .265, .169, .156, .003, .005, .005);
+		oval(head, dark, side * .12, .095, .61, .019, .01, .009);
+		oval(head, skin, side * .18, .01, .33, .06, .075, .2);
+		// Creased lips, a recessed ear and loose throat folds.
+		oval(head, dark, side * .24, .09, -.055, .008, .024, .016);
+		for(let fold=0;fold<4;fold++){
+			const crease=oval(head, belly, side*.12, -.13-fold*.017, -.035+fold*.06, .095, .013, .035);
+			crease.rotation.z=side*.18;
+		}
 	}
 	const teeth = new THREE.MeshStandardMaterial({ color: 0xe4d5a7, roughness: .65 });
 	for (const side of [-1, 1]) for (let i = 0; i < 7; i++) {
@@ -65,7 +78,8 @@ export function createKomodoEncounter(scene, prisoner) {
 		oval(leg, skin, side * .4, -.39, .14, .12, .055, .18);
 		for (let toe = 0; toe < 4; toe++) {
 			const x = side * .4 + (toe - 1.5) * .055;
-			bone(leg, [x, -.39, .2], [x, -.41, .37], .024, .004, dark);
+			bone(leg, [x, -.39, .2], [x, -.405, .33], .025, .013, skin);
+			bone(leg, [x, -.405, .33], [x, -.435, .415], .014, .001, teeth);
 		}
 		legs.push(leg);
 	}
@@ -77,7 +91,8 @@ export function createKomodoEncounter(scene, prisoner) {
 	const parts = [...root.children]; root.add(pose); root.updateMatrixWorld(true);
 	parts.forEach(part => pose.attach(part));
 	const torso = pose.children.filter(part => part.isMesh).map(mesh => ({
-		mesh, rest: mesh.geometry.attributes.position.array.slice(),
+		mesh, rest: mesh.geometry.attributes.position.array.slice(), restX: mesh.position.x,
+		rigid: Math.max(mesh.scale.x, mesh.scale.y, mesh.scale.z) < .1,
 	}));
 	const headRest = head.position.clone();
 	const targetPoint = new THREE.Vector3(), tailA = new THREE.Vector3(), tailB = new THREE.Vector3(), tailDirection = new THREE.Vector3();
@@ -85,7 +100,8 @@ export function createKomodoEncounter(scene, prisoner) {
 	function undulate(walking) {
 		const amplitude = walking ? .1 : .045;
 		const wave = z => Math.sin(age * 4.5 - z * 2.7) * amplitude;
-		for (const { mesh, rest } of torso) {
+		for (const { mesh, rest, restX, rigid } of torso) {
+			if (rigid) { mesh.position.x = restX + wave(mesh.position.z); continue; }
 			const vertices = mesh.geometry.attributes.position;
 			for (let i = 0; i < vertices.count; i++) {
 				const z = rest[i * 3 + 2] * mesh.scale.z + mesh.position.z;
