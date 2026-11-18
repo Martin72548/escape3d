@@ -80,7 +80,11 @@ export function addSceneContent(scene) {
 		for(let object=hit?.mesh;object;object=object.parent)if(object.userData.returnToStart){window.location.reload();return;}
 		dungeonExit.unlockAudio();
 		if (museum.active) { museum.cast(hit); return; }
-		if (hit.target?.userData.spellTarget === 'exit-passage' && dungeonExit.opened) { slabSpell.batEncounter.stopAudio(); slabSpell.catEncounter.stopAudio(); museum.enter(); return; }
+		if (hit.target?.userData.spellTarget === 'exit-passage' && dungeonExit.opened) {
+			slabSpell.finishRayFrame?.();
+			slabSpell.applyImpacts?.();
+			slabSpell.batEncounter.stopAudio(); slabSpell.catEncounter.stopAudio(); museum.enter(); return;
+		}
 		slabSpell.cast(hit);
 	}
 	const revealKey = hideKeyUnderSlab(scene, new THREE.Vector3(3.4, 0, -1), dungeonExit.open);

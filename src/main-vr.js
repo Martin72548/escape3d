@@ -239,7 +239,7 @@ function animate() {
 	firstPerson.update();
 	gameOverControls.update(deltaTime);
 	renderer.render(scene, camera);
-	slabSpell.finishRayFrame();
+	slabSpell.finishRayFrame?.();
 }
 
 window.addEventListener('resize', resize);
