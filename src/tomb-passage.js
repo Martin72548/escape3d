@@ -1,4 +1,5 @@
 import { stoneFloorHeight } from './stone-floor.js';
+import { translate } from './language.js';
 import { createRecordedDoorCreak } from './recorded-door-creak.js';
 import { statueExplosionSound } from './statue-explosion-sound.js';
 import { createWerewolfEncounter } from './werewolf-encounter.js';
@@ -118,7 +119,10 @@ export function createTombPassage(scene,tomb,prisoner,onArrive){
  return {trigger,update,get active(){return triggered;},get state(){return state;}};
 }
 
-const cageWarningSequence = "Une louve affamée qu'on a enfermée ici t'attend pour se nourrir.".split(' ');
+const cageWarningSequence = translate(
+ "Une louve affamée qu'on a enfermée ici t'attend pour se nourrir.",
+ 'Una loba hambrienta encerrada aquí te espera para devorarte sin piedad.',
+).split(' ');
 
 // Place each word on the face of one existing masonry block.
 function addCageWarning(stones){
@@ -160,7 +164,7 @@ function addPuzzleInstruction(stones,labels){
  if(best<0)return;
  const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=384;
  const ctx=canvas.getContext('2d');ctx.font='bold 112px Georgia, serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#211b14';
- ctx.fillText('Descubre el',512,120,940);ctx.fillText('mensaje',512,264,940);
+ ctx.fillText(translate('Découvre le', 'Descubre el'),512,120,940);ctx.fillText(translate('message', 'mensaje'),512,264,940);
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
  const label=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}));
  stones.getMatrixAt(best,matrix);matrix.decompose(position,rotation,scale);
@@ -181,9 +185,9 @@ function addEscapeWord(stones,labels){
  if(best<0)throw new Error('No se encontro el ladrillo para Fuis !');
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=192;
  const ctx=canvas.getContext('2d');ctx.font='bold 92px Georgia, serif';ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.shadowColor='#ff3100';ctx.shadowBlur=28;ctx.fillStyle='#ff6505';ctx.fillText('Fuis !',256,100,460);
+ ctx.shadowColor='#ff3100';ctx.shadowBlur=28;ctx.fillStyle='#ff6505';ctx.fillText(translate('Fuis !', '¡Huye!'),256,100,460);
  ctx.shadowColor='#ff9900';ctx.shadowBlur=12;
- const fire=ctx.createLinearGradient(0,55,0,145);fire.addColorStop(0,'#fffde8');fire.addColorStop(.5,'#ffe974');fire.addColorStop(.8,'#ffad21');fire.addColorStop(1,'#ff4c05');ctx.fillStyle=fire;ctx.fillText('Fuis !',256,100,460);
+ const fire=ctx.createLinearGradient(0,55,0,145);fire.addColorStop(0,'#fffde8');fire.addColorStop(.5,'#ffe974');fire.addColorStop(.8,'#ffad21');fire.addColorStop(1,'#ff4c05');ctx.fillStyle=fire;ctx.fillText(translate('Fuis !', '¡Huye!'),256,100,460);
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
  const label=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-1}));
  stones.getMatrixAt(best,matrix);matrix.decompose(position,rotation,scale);

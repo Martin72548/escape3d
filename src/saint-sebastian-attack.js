@@ -1,3 +1,4 @@
+import { translate } from './language.js';
 import { createArrowFlightSound } from './arrow-flight-sound.js';
 import * as THREE from 'three';
 import { createSebastianDestruction } from './sebastian-destruction.js';
@@ -94,7 +95,7 @@ export function createSebastianAttack(scene, figure, prisoner, statue) {
 		const panel=document.createElement('div');panel.id='sebastian-game-over';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
 		panel.style.cssText='position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:rgba(8,7,6,.78);color:#eee4cf;font-family:system-ui;text-align:center;';
 		const card=document.createElement('div'),title=document.createElement('h1'),text=document.createElement('p'),button=document.createElement('button');
-		title.textContent='Fin del juego';text.textContent='Las flechas de San Sebastián alcanzaron al prisionero.';button.textContent='Volver a empezar';
+		title.textContent=translate('Fin de la partie', 'Fin del juego');text.textContent=translate('Les flèches de saint Sébastien ont atteint le prisonnier.', 'Las flechas de San Sebastián alcanzaron al prisionero.');button.textContent=translate('Recommencer', 'Volver a empezar');
 		button.style.cssText='padding:12px 24px;font:inherit;cursor:pointer;border-radius:8px;border:1px solid #bdab85;background:#eadcc0;color:#211b13;';
 		button.addEventListener('click',()=>window.location.reload());card.append(title,text,button);panel.append(card);document.body.append(panel);button.focus();
 	}

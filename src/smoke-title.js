@@ -1,18 +1,25 @@
+import { translate } from './language.js';
 import { showFireMessage } from './fire-message.js';
 
-const introduction = `Aide le magicien prisonnier à échapper de ce sombre cachot.
+const introduction = translate(`Aide le magicien prisonnier à échapper de ce sombre cachot.
 
 La clé qui ouvre la porte est cachée sous une dalle ou une brique. Détruis tout ce qui peut mettre sa vie en danger, ouvre la porte et passe au niveau suivant.
 
 Pour te déplacer dans le cachot, utilise les touches W, A, S et D.
 
-Que la chance t’accompagne !`;
+Que la chance t’accompagne !`, `Ayuda al mago prisionero a escapar de este oscuro calabozo.
+
+La llave que abre la puerta está escondida bajo una losa o un ladrillo. Destruye todo lo que ponga en peligro al mago, abre la puerta y pasa al siguiente nivel.
+
+Usa las teclas W, A, S y D para moverte por el calabozo.
+
+¡Buena suerte!`);
 
 // A brief, transparent title made from drifting smoke particles.
 const canvas = document.createElement('canvas');
 canvas.className = 'smoke-title';
 canvas.setAttribute('role', 'img');
-canvas.setAttribute('aria-label', 'Le magicien');
+canvas.setAttribute('aria-label', translate('Le magicien', 'El mago'));
 document.body.appendChild(canvas);
 const context = canvas.getContext('2d');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -33,7 +40,7 @@ function resize() {
   ink.font = `italic ${size}px Georgia, serif`;
   ink.textAlign = 'center';
   ink.textBaseline = 'middle';
-  ink.fillText('Le magicien', mask.width / 2, 100);
+  ink.fillText(translate('Le magicien', 'El mago'), mask.width / 2, 100);
   const pixels = ink.getImageData(0, 0, mask.width, 200).data;
   particles = [];
   const step = width < 600 ? 2 : 3;

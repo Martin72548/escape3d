@@ -4,6 +4,7 @@ import { createSculptedWerewolfHead } from './werewolf-sculpted-head.js';
 import { createSculptedWerewolfTorso } from './werewolf-sculpted-torso.js';
 import { createWerewolfLimb } from './werewolf-limbs.js';
 import { createWerewolfCageBlood } from './werewolf-cage-blood.js';
+import { translate } from './language.js';
 import * as THREE from 'three';
 
 export function createWerewolfEncounter(parent,prisoner,onCaged){
@@ -95,7 +96,7 @@ export function createWerewolfEncounter(parent,prisoner,onCaged){
  }
  function finishGame(){
   state='finished';prisoner.userData.dead=true;
-  const panel=document.createElement('div');panel.id='werewolf-game-over';panel.setAttribute('role','alert');panel.textContent='El juego termin\u00f3';panel.style.cssText='position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(13,7,9,.28);color:#fff0e3;font:bold clamp(28px,5vw,62px) system-ui;text-align:center;text-shadow:0 3px 18px #000;padding:24px;pointer-events:none;';document.body.append(panel);
+  const panel=document.createElement('div');panel.id='werewolf-game-over';panel.setAttribute('role','alert');panel.textContent=translate('Fin de la partie', 'El juego terminó');panel.style.cssText='position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(13,7,9,.28);color:#fff0e3;font:bold clamp(28px,5vw,62px) system-ui;text-align:center;text-shadow:0 3px 18px #000;padding:24px;pointer-events:none;';document.body.append(panel);
  }
  function update(dt){
   if(state==='hidden'||state==='caged'||state==='finished')return;age+=dt;cageBlood.update(dt);

@@ -2,8 +2,7 @@ import * as THREE from 'three';
 
 export function createTrunkWordPickup(prisoner, wordsReady, awardPoint, blocked) {
   let words=[], current=null, previous=[];
-  const nouns=new Set(['dragon','château','dame']);
-  wordsReady.then(group=>{words=group?.children.filter(object=>object.userData.word&&nouns.has(object.userData.word))??[];});
+  wordsReady.then(group=>{words=group?.children.filter(object=>object.userData.collectibleNoun)??[];});
   const appearance=prisoner.userData.updateAppearance;
   function restoreBones(){previous.forEach(([bone,q])=>bone.quaternion.copy(q));previous=[];}
   function aim(bone, child, target, blend){
