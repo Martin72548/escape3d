@@ -151,8 +151,8 @@ html:fullscreen .scene-toolbar { display: none; }
 
 /* Score remains visible in the upper-right corner during play. */
 .view-controls { position: fixed; right: calc(max(20px, env(safe-area-inset-right)) + 60px); bottom: max(20px, env(safe-area-inset-bottom)); z-index: 10; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; max-width: min(330px, 70vw); }
-#first-person-toggle { height: 48px; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 12px; border: 0; border-radius: 0; background: transparent; color: #fff36a; font: 900 28px/1 "Arial Black", Arial, sans-serif; letter-spacing: -1px; cursor: pointer; box-shadow: none; text-shadow: 0 0 3px #fff9b0, 0 0 7px #ffdf00, 0 0 15px #ffdf0099; }
-#first-person-toggle span { display: block; height: 21px; line-height: 28px; transform: translateY(-4px); }
+#first-person-toggle { height: 48px; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 12px; border: 0; border-radius: 0; background: transparent; color: #fff36a; font: 900 22px/1 "Arial Black", Arial, sans-serif; letter-spacing: -1px; cursor: pointer; box-shadow: none; text-shadow: 0 0 3px #fff9b0, 0 0 7px #ffdf00, 0 0 15px #ffdf0099; }
+#first-person-toggle span { display: block; height: 17px; line-height: 22px; transform: translateY(-3px); }
 #first-person-toggle:hover { color: #fffbd0; }
 #first-person-toggle[aria-pressed="true"] { color: #fffbd0; text-shadow: 0 0 4px #fff9b0, 0 0 10px #ffdf00, 0 0 20px #ffdf00; }
 #first-person-toggle:focus-visible { outline: 3px solid #ffe18c; outline-offset: 3px; }
