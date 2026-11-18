@@ -10,10 +10,14 @@ export async function addSaintLucia(parent) {
 	const loader=new GLTFLoader();
 	const assets=await Promise.all([
 		loader.loadAsync(`${base}models/prisoner/base_body.glb`),
-		loader.loadAsync(`${base}models/saint-lucia/hair_long01.glb`),
+		loader.loadAsync(`${base}models/saint-lucia/hair_long01.glb`).catch(error => {
+			console.warn('Cheveux de sainte Lucie indisponibles :', error);
+			return null;
+		}),
 	]);
 	const armRigs=[];
 	for(const asset of assets){
+		if(!asset)continue;
 		const model=asset.scene;root.add(model);const meshes=[];model.traverse(object=>{if(object.isMesh)meshes.push(object);});
 		for(const mesh of meshes){
 			mesh.castShadow=mesh.receiveShadow=true;mesh.frustumCulled=false;
@@ -35,6 +39,7 @@ export async function addSaintLucia(parent) {
 		const bones=new Map();model.traverse(object=>{if(object.isBone)bones.set(object.name,object);});
 		for(const [side,sign] of [['l',1],['r',-1]]){
 			const upper=bones.get('upperarm_'+side),lower=bones.get('lowerarm_'+side),hand=bones.get('hand_'+side);
+			if(!upper||!lower||!hand)continue;
 			const elbow=new THREE.Vector3(sign*.29,1.16,.18),wrist=new THREE.Vector3(sign*(side==='l'?.18:.14),1.15,side==='l'?.36:.43);
 			const upperPoint=upper.getWorldPosition(new THREE.Vector3()).applyMatrix4(inverseRoot);
 			const oldFore=hand.getWorldPosition(new THREE.Vector3()).sub(lower.getWorldPosition(new THREE.Vector3())).normalize();
