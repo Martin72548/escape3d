@@ -53,6 +53,13 @@
 		<div id="scoreboard" role="status" aria-live="polite" aria-atomic="true"><span>Points</span><strong id="score-value">0</strong></div>
 		<div id="scene-container" aria-label="Escena tridimensional preparada para realidad virtual"></div>
 		<div id="xr-button-container" aria-live="polite"></div>
+		<button id="sound-toggle" type="button" aria-label="Silenciar sonido" aria-pressed="false" title="Silenciar sonido">
+			<svg viewBox="0 0 64 64" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+				<path d="M19 18H7a3 3 0 0 0-3 3v22a3 3 0 0 0 3 3h12L34 57a2.5 2.5 0 0 0 4-2V9a2.5 2.5 0 0 0-4-2L19 18v28"/>
+				<path class="sound-waves" d="M46 19a19 19 0 0 1 0 26M54 10a33 33 0 0 1 0 44"/>
+				<path class="sound-muted" d="m46 25 14 14m0-14L46 39"/>
+			</svg>
+		</button>
 		<div class="view-controls"><button id="first-person-toggle" type="button" aria-label="Première personne" title="Première personne" aria-pressed="false" aria-describedby="first-person-hint"><span aria-hidden="true">POV</span></button><span id="first-person-hint" hidden>Arrastra para mirar · WASD para caminar · Clic para lanzar un rayo</span></div>
 		<div class="fullscreen-controls"><button id="fullscreen-toggle" type="button" aria-pressed="false" aria-label="Plein écran" title="Plein écran"><svg viewBox="0 0 64 64" width="28" height="28" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M24 24 8 8m0 14V8h14M40 24 56 8m-14 0h14v14M24 40 8 56m14 0H8V42M40 40l16 16m0-14v14H42"/></svg></button><span id="fullscreen-status" role="status"></span></div>
 		<script>
