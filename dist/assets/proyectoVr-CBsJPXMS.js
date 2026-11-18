@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./main-vr-CuqZ5QlZ.js","./OrbitControls-ClXiLsPh.js","./fire-message-CqeZkp7g.js"])))=>i.map(i=>d[i]);
+import"./styles-DBrinZ-f.js";import{n as e}from"./fire-message-CqeZkp7g.js";import{t}from"./smoke-title-TRKhvtuy.js";e(document.getElementById(`sound-toggle`)),t(()=>import(`./main-vr-CuqZ5QlZ.js`),__vite__mapDeps([0,1,2]),import.meta.url).catch(window.showSceneError);
