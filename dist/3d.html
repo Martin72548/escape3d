@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="La pista del desván: descubre transformaciones mágicas." />
+		<title>La pista del desván</title>
+
+		<script type="importmap">
+{
+  "imports": {
+    "three": "./node_modules/three/build/three.module.js",
+    "three/addons/": "./node_modules/three/examples/jsm/",
+    "three/examples/jsm/": "./node_modules/three/examples/jsm/"
+  }
+}
+		</script>
+		<script type="module" crossorigin src="./assets/proyecto3d-BwoDLKqt.js"></script>
+		<link rel="modulepreload" crossorigin href="./assets/styles-5lKU8QLc.js">
+		<link rel="modulepreload" crossorigin href="./assets/OrbitControls-ClXiLsPh.js">
+		<link rel="stylesheet" crossorigin href="./assets/styles-BTE5O4qf.css">
+	</head>
+	<body class="scene-page game-page">
+		<header class="scene-toolbar game-toolbar">
+			<a class="back-link" href="/" aria-label="Volver al inicio">Inicio</a>
+			<div class="game-title"><p class="scene-label">Aventura mágica</p><h1>La pista del desván</h1></div>
+			<div class="game-status" aria-live="polite"><strong id="progress">0 / 9</strong><span id="game-timer">01:00</span><span id="game-message">Busca los objetos encantados</span></div>
+			<button id="reset-game" type="button">Recomenzar</button>
+			<div id="player-lives" class="player-lives" role="status" aria-label="5 vidas restantes"><span aria-hidden="true">&#9829;</span><span aria-hidden="true">&#9829;</span><span aria-hidden="true">&#9829;</span><span aria-hidden="true">&#9829;</span><span aria-hidden="true">&#9829;</span></div>
+		</header>
+		<div id="scoreboard" role="status" aria-live="polite" aria-atomic="true"><span>Puntos</span><strong id="score-value">0</strong></div>
+		<div id="scene-container" aria-label="Taller mágico tridimensional"></div>
+		<div class="aim-reticle" aria-hidden="true">✦</div>
+		<div id="intro-card" class="victory-card intro-card" role="dialog" aria-modal="true" aria-labelledby="intro-title"><div class="victory-content intro-content"><span class="victory-star">✦</span><h2 id="intro-title">Antes de entrar al desván</h2><p id="intro-rules">Tienes <strong>1 minuto</strong> para encontrar el <strong>pergamino</strong> que te indicará cómo salir del <strong>Desván de las Metamorfosis</strong>, en donde estás ahora. Aquí, criaturas muy peligrosas fueron transformadas en objetos. Desenmascáralas tocándolas con la varita mágica, pero no dejes que se te acerquen. Si lo hacen, puedes desintegrarlas con tu varita mágica. ¡Cuidado! <strong>Tendrás que evitar el mecanismo explosivo</strong> escondido en uno de los objetos. Tu misión es encontrar el pergamino antes de que se acabe el tiempo y seguir tu camino.</p><div class="intro-actions"><button id="skip-rules" type="button">Comenzar juego</button></div></div></div><div id="victory-card" class="victory-card" role="dialog" aria-modal="true" aria-labelledby="victory-title" hidden><div class="victory-content"><span class="victory-star">✦</span><h2 id="victory-title">Sube las escaleras y sigue tu camino.</h2><button id="victory-restart" type="button">Recomenzar</button></div></div><div id="explosion-smoke" aria-hidden="true"></div><div id="explosion-card" class="victory-card" role="dialog" aria-modal="true" aria-labelledby="explosion-title" hidden><div class="victory-content explosion-content"><span class="victory-star fire-star">✦</span><h2 id="explosion-title">Tocaste el objeto explosivo</h2><button id="explosion-restart" type="button">Recomenzar</button></div></div>
+		<div id="spider-card" class="victory-card" role="dialog" aria-modal="true" aria-labelledby="spider-title" hidden><div class="victory-content"><h2 id="spider-title">Tocaste la antorcha incorrecta</h2><button id="spider-restart" type="button">Recomenzar</button></div></div>
+<div id="lives-card" class="victory-card" role="dialog" aria-modal="true" aria-labelledby="lives-title" hidden><div class="victory-content"><h2 id="lives-title">Te quedaste sin vidas</h2><button id="lives-restart" type="button">Recomenzar</button></div></div>
+<div class="spell-hint">WASD moverse · Mouse mirar · Clic disparar · Mantener clic disparo automático</div>
+		
+	</body>
+</html>
+

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Escena de realidad virtual creada con Three.js, WebXR y XR Components." />
+		<title>Le magicien</title>
+
+		<script type="importmap">
+{
+  "imports": {
+    "three": "./node_modules/three/build/three.module.js",
+    "three/addons/": "./node_modules/three/examples/jsm/",
+    "three/examples/jsm/": "./node_modules/three/examples/jsm/"
+  }
+}
+		</script>
+		<script type="module" crossorigin src="./assets/inicio-BSRyzisU.js"></script>
+		<link rel="modulepreload" crossorigin href="./assets/styles-5lKU8QLc.js">
+		<link rel="modulepreload" crossorigin href="./assets/fire-message-CqS6Z93u.js">
+		<link rel="modulepreload" crossorigin href="./assets/smoke-title-B9BWAEMr.js">
+		<link rel="stylesheet" crossorigin href="./assets/styles-BTE5O4qf.css">
+	</head>
+	<body class="scene-page">
+		<dialog id="dungeon-intro" aria-labelledby="dungeon-intro-title">
+			<div class="dungeon-intro-content">
+				<h2 id="dungeon-intro-title">Te encuentras atrapado.a en un oscuro calabozo del que deberás escapar.</h2>
+				<p>La llave que abre la puerta está oculta bajo una de las losas del suelo. Puedes intentar encontrarla por tu cuenta o conseguir <strong>15 puntos matando monstruos e insectos</strong> para iluminar la losa que esconde la llave. Una vez localizada, podrás levantarla, recuperar la llave y pasar al siguiente nivel.</p>
+				<p><strong>Para desplazarte por el calabozo, utiliza las teclas W, A, S y D:</strong></p>
+				<ul>
+					<li><strong>W:</strong> avanzar.</li>
+					<li><strong>S:</strong> retroceder.</li>
+					<li><strong>A:</strong> desplazarte hacia la izquierda.</li>
+					<li><strong>D:</strong> desplazarte hacia la derecha.</li>
+				</ul>
+				<p>¡Pero cuidado! En las sombras acechan animales y criaturas monstruosas. No todos son letales, aunque nunca se sabe qué peligros esconden. <strong>Más te vale ser precavido.a y acabar con todos ellos antes de que sea demasiado tarde.</strong></p>
+				<p class="dungeon-intro-farewell"><em>¡Que la suerte te acompañe!</em></p>
+				
+				<form method="dialog"><button id="dungeon-intro-close" type="submit" autofocus>Cerrar</button></form>
+			</div>
+		</dialog>
+		<script>
+			const dungeonIntro = document.getElementById('dungeon-intro');
+			const entryUrl = new URL(window.location.href);
+			if (entryUrl.searchParams.get('restart') === '1') {
+				entryUrl.searchParams.delete('restart');
+				window.history.replaceState(window.history.state, '', entryUrl.href);
+			} else if (entryUrl.searchParams.get('intro') === '1') dungeonIntro.showModal();
+			// Keep game shortcuts inactive while reading; native dialog controls still work.
+			for (const type of ['keydown', 'keyup']) window.addEventListener(type, event => {
+				if (dungeonIntro.open) event.stopImmediatePropagation();
+			}, true);
+			dungeonIntro.addEventListener('close', () => {
+				const canvas = document.querySelector('#scene-container canvas');
+				if (canvas) { canvas.tabIndex = 0; canvas.focus({ preventScroll: true }); }
+			});
+		</script>
+		<div id="scoreboard" role="status" aria-live="polite" aria-atomic="true"><span>Points</span><strong id="score-value">0</strong></div>
+		<div id="scene-container" aria-label="Escena tridimensional preparada para realidad virtual"></div>
+		<div id="xr-button-container" aria-live="polite"></div>
+		<button id="sound-toggle" type="button" aria-label="Silenciar sonido" aria-pressed="false" title="Silenciar sonido">
+			<svg viewBox="0 0 64 64" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+				<path d="M19 18H7a3 3 0 0 0-3 3v22a3 3 0 0 0 3 3h12L34 57a2.5 2.5 0 0 0 4-2V9a2.5 2.5 0 0 0-4-2L19 18v28"/>
+				<path class="sound-waves" d="M46 19a19 19 0 0 1 0 26M54 10a33 33 0 0 1 0 44"/>
+				<path class="sound-muted" d="m46 25 14 14m0-14L46 39"/>
+			</svg>
+		</button>
+		<div class="view-controls"><button id="first-person-toggle" type="button" aria-label="Première personne" title="Première personne" aria-pressed="false" aria-describedby="first-person-hint"><span aria-hidden="true">POV</span></button><span id="first-person-hint" hidden>Arrastra para mirar · WASD para caminar · Clic para lanzar un rayo</span></div>
+		<div class="fullscreen-controls"><button id="fullscreen-toggle" type="button" aria-pressed="false" aria-label="Plein écran" title="Plein écran"><svg viewBox="0 0 64 64" width="28" height="28" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M24 24 8 8m0 14V8h14M40 24 56 8m-14 0h14v14M24 40 8 56m14 0H8V42M40 40l16 16m0-14v14H42"/></svg></button><span id="fullscreen-status" role="status"></span></div>
+		<script>
+			window.showSceneError = function (error) {
+				let panel = document.getElementById('scene-error');
+				if (!panel) {
+					panel = document.createElement('div');
+					panel.id = 'scene-error'; panel.setAttribute('role', 'alert');
+					panel.style.cssText = 'position:fixed;z-index:100;top:30%;left:10%;right:10%;padding:24px;border:1px solid #ffb46c;border-radius:16px;background:#282130;color:white;font:16px/1.6 system-ui;white-space:pre-wrap;overflow-wrap:anywhere';
+					document.body.appendChild(panel);
+				}
+				panel.textContent = 'No se pudo mostrar la escena 3D.\n' + (error?.message || String(error));
+			};
+			window.addEventListener('error', event => { if (event.message) window.showSceneError(event.error || event.message); });
+			window.addEventListener('unhandledrejection', event => window.showSceneError(event.reason));
+		</script>
+		
+	</body>
+</html>
