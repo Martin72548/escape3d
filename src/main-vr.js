@@ -1,4 +1,5 @@
 import { createAdaptiveResolution } from './adaptive-resolution.js';
+import { createDungeonMusic } from './dungeon-music.js';
 import { enableFullscreen } from './desktop-fullscreen.js';
 import { enableDungeonRestart } from './restart-dungeon.js';
 
@@ -43,6 +44,15 @@ orbitControls.zoomSpeed = 0.6;
 orbitControls.maxPolarAngle = Math.PI * 0.49;
 
 const { floorGeometry, grid, axes, updateHiddenKey, slabSpell, prisoner, museum, onSceneClick } = addSceneContent(scene);
+const dungeonMusic = createDungeonMusic();
+function startDungeonMusic(event) {
+ if (museum.active || prisoner.userData.dead) return;
+ if (dungeonIntro?.open && !event.target.closest?.('#dungeon-intro-close')) return;
+ dungeonMusic.start();
+}
+window.addEventListener('pointerdown', startDungeonMusic, { capture: true });
+window.addEventListener('keydown', startDungeonMusic, { capture: true });
+renderer.xr.addEventListener('sessionstart', () => dungeonMusic.start());
 // Prepare spell resources during startup so the first click is responsive.
 slabSpell.prepare(renderer,camera).catch(error=>console.warn('Preparacion del rayo:',error));
 document.querySelector('#dungeon-intro-close')?.addEventListener('pointerdown',()=>slabSpell.unlockAudio(),{once:true});
@@ -188,6 +198,7 @@ function resize() {
 }
 
 function animate() {
+ if (museum.active || prisoner.userData.dead || prisoner.userData.gameOver) dungeonMusic.stop();
 	const currentTime = performance.now();
 	const deltaTime = Math.min((currentTime - previousTime) / 1000, 0.1);
 	previousTime = currentTime;
