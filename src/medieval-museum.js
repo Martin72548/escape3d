@@ -1,4 +1,5 @@
 import { addMuseumBackWall } from './museum-back-wall.js';
+import { addMedievalVault } from './medieval-vault.js';
 import { createMuseumBatSwarm } from './museum-bat-swarm.js';
 import { createGoldenSerpent } from './golden-serpent.js';
 import { createGregorianAmbience } from './gregorian-ambience.js';
@@ -151,7 +152,7 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
    const courses=addStoneCourses(root,wallStone,20,6,x-Math.sign(x)*.17,3,z-Math.sign(z)*.17,0,rotation,802+Math.round(rotation*10),false);
    courses.name='Bloques de piedra de la pared del museo';
   }
-  box(root,20,.2,20,darkStone,0,6,0);
+  addMedievalVault(root,wallStone);
   for(const x of [-8.8,8.8])for(const z of [-8,-2,4]){
    mesh(root,new THREE.CylinderGeometry(.28,.34,5.7,12),stone,x,2.85,z);
    box(root,.85,.22,.85,darkStone,x,.11,z);box(root,.85,.25,.85,darkStone,x,5.65,z);
