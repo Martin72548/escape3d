@@ -11,7 +11,7 @@ export function addMuseumWallPhrases(parent) {
   const inscriptions = new THREE.Group();
   inscriptions.name = 'Phrases inscrites chacune dans un bloc';
   inscriptions.userData.phrases = phrases;
-  const slots = [[0,1],[1,1],[2,1],[1,0]];
+  const slots = [[0,1],[1,1],[2,1],[2,0]];
   phrases.forEach((phrase, index) => {
     const canvas = document.createElement('canvas');
     canvas.width = 2048; canvas.height = 900;
