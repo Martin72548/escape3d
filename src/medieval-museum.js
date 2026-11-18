@@ -54,6 +54,7 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
     return;
    }
    if(!hit?.mesh||prisoner.userData.dead||prisoner.userData.gameOver)return;
+   for(let word=hit.mesh;word;word=word.parent)if(word.userData.spellTarget==='trunk-word'){chasm.takeWord(word);return;}
    chasm.birds.unlockAudio();const flight=chasm.birds.flightFor(hit.mesh),bird=flight?.target(hit.mesh);
    shots.push({point:hit.point.clone(),chasmTarget:bird,chasmFlight:flight,harpyPass:flight?.pass});return;
   }

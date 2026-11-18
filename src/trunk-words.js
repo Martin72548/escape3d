@@ -25,7 +25,7 @@ export async function addTrunkWords(parent, barkMaterial) {
     const geometry = new TextGeometry(word.replace('â','a'), options);
     geometry.computeBoundingBox();
     const bounds=geometry.boundingBox, width=bounds.max.x-bounds.min.x;
-    const object=new THREE.Group();object.name=`Mot 3D : ${word}`;object.userData.word=word;
+    const object=new THREE.Group();object.name=`Mot 3D : ${word}`;object.userData.word=word;object.userData.spellTarget='trunk-word';
     const text=new THREE.Mesh(geometry,[front,edges]);object.add(text);
     if(word.includes('â')){
       const prefix=new TextGeometry('ch',options);prefix.computeBoundingBox();
@@ -58,7 +58,7 @@ export async function addTrunkWords(parent, barkMaterial) {
     cut.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),direction.clone().normalize());cut.receiveShadow=true;group.add(cut);
     object.position.copy(end).add(new THREE.Vector3(0,.18,.03));
     object.rotation.y=(index%2===0?1:-1)*.12;
-    object.traverse(part=>{if(part.isMesh){part.castShadow=part.receiveShadow=true;part.raycast=()=>{};}});
+    object.traverse(part=>{if(part.isMesh){part.castShadow=part.receiveShadow=true;}});
     group.add(object);
   });
   return group;

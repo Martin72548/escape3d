@@ -103,7 +103,7 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  }
  let age=0;
  const wordPickup=createTrunkWordPickup(prisoner,root.userData.wordsReady,onPointEarned,()=>fall.active||victory.active||prisoner.userData.dead||prisoner.userData.gameOver);
- return {root,trunk,river,birds,victory,fall,goalCross,update(dt){age+=dt;river.update(dt);const previous=birds.flights.map(flight=>({position:flight.bird.position.clone(),pass:flight.pass}));birds.update(dt);birds.flights.forEach((flight,index)=>checkBirdContact(flight,flight.pass!==previous[index].pass?flight.bird.position:previous[index].position));fall.update(dt);
+ return {root,trunk,river,birds,victory,fall,goalCross,takeWord:wordPickup.take,update(dt){age+=dt;river.update(dt);const previous=birds.flights.map(flight=>({position:flight.bird.position.clone(),pass:flight.pass}));birds.update(dt);birds.flights.forEach((flight,index)=>checkBirdContact(flight,flight.pass!==previous[index].pass?flight.bird.position:previous[index].position));fall.update(dt);
  if(!victory.active&&!fall.active&&isStandingOnGoalCross(prisoner,goalCross)){birds.stop();victory.start();}
  wordPickup.update(dt);victory.update(dt);mist.forEach((layer,i)=>layer.position.x=Math.sin(age*.08+i)*2);}};
 }

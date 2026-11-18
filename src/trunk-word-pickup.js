@@ -34,21 +34,24 @@ export function createTrunkWordPickup(prisoner, wordsReady, awardPoint, blocked)
       }
     }
   };
+  function take(object){
+    if(current||blocked())return false;
+    let word=object;
+    while(word&&!words.includes(word))word=word.parent;
+    if(!word||word.userData.collected||!word.visible)return false;
+    current={word,time:0,start:word.position.clone(),startWorld:word.getWorldPosition(new THREE.Vector3()),side:Math.sign(word.position.x)||1,awarded:false};
+    return true;
+  }
   function update(dt){
     if(blocked()){
       if(current){current.word.position.copy(current.start);current.word.visible=!current.awarded;current=null;}
       restoreBones();return;
     }
-    if(!current){
-      const position=prisoner.getWorldPosition(new THREE.Vector3());
-      const word=words.find(word=>!word.userData.collected&&word.visible&&Math.abs(word.getWorldPosition(new THREE.Vector3()).z-position.z)<1.15);
-      if(!word)return;
-      current={word,time:0,start:word.position.clone(),startWorld:word.getWorldPosition(new THREE.Vector3()),side:Math.sign(word.position.x)||1,awarded:false};
-    }
+    if(!current)return;
     current.time+=dt;
     if(current.time>=.8&&!current.awarded){current.awarded=true;current.word.userData.collected=true;awardPoint();}
     if(current.time>=1.25)current.word.visible=false;
     if(current.time>=1.6){current=null;restoreBones();}
   }
-  return {update};
+  return {update,take};
 }
