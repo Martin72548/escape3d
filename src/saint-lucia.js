@@ -2,19 +2,27 @@ import { publicAssetBase } from './public-asset-base.js';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+let preparedAssets;
+export function preloadSaintLucia() {
+	if (!preparedAssets) {
+		const loader = new GLTFLoader();
+		preparedAssets = Promise.all([
+			loader.loadAsync(`${publicAssetBase}models/prisoner/base_body.glb`),
+			loader.loadAsync(`${publicAssetBase}models/saint-lucia/hair_long01.glb`).catch(error => {
+				console.warn('Cheveux de sainte Lucie indisponibles :', error);
+				return null;
+			}),
+		]);
+		preparedAssets.catch(() => { preparedAssets = null; });
+	}
+	return preparedAssets;
+}
+
 export async function addSaintLucia(parent) {
 	const fallback=[...parent.children];
 	parent.name='Santa Lucia con vestido azul y halo dorado';
 	const root=new THREE.Group();root.name='Santa Lucia de rostro humano';root.scale.setScalar(1.28);root.visible=false;parent.add(root);
-	const base=publicAssetBase;
-	const loader=new GLTFLoader();
-	const assets=await Promise.all([
-		loader.loadAsync(`${base}models/prisoner/base_body.glb`),
-		loader.loadAsync(`${base}models/saint-lucia/hair_long01.glb`).catch(error => {
-			console.warn('Cheveux de sainte Lucie indisponibles :', error);
-			return null;
-		}),
-	]);
+	const assets=await preloadSaintLucia();
 	const armRigs=[];
 	for(const asset of assets){
 		if(!asset)continue;

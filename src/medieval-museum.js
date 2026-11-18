@@ -18,7 +18,7 @@ import { createDenisAttack } from './saint-denis-attack.js';
 import { addSaintSebastian } from './saint-sebastian.js';
 import { createSebastianAttack } from './saint-sebastian-attack.js';
 import { addTripalium } from './tripalium.js';
-import { addSaintLucia } from './saint-lucia.js';
+import { addSaintLucia, preloadSaintLucia } from './saint-lucia.js';
 import { createLuciaHaloAttack } from './lucia-halo-attack.js';
 import { addSaintGeorge } from './saint-george.js';
 import { createGeorgeEncounter } from './saint-george-encounter.js';
@@ -26,6 +26,7 @@ import * as THREE from 'three';
 import { createStoneMaterial, addStoneCourses } from './stone-masonry.js';
 
 export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
+ preloadSaintLucia().catch(error=>console.warn('Prechargement de sainte Lucie :',error));
  let active=false,age=0,nextStatue=0;
  const root=new THREE.Group();root.name='Museo medieval de piedra';
  const torches=[];
