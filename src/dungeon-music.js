@@ -27,8 +27,8 @@ export function createDungeonMusic() {
       filter.type = 'lowpass'; filter.frequency.value = 1800;
       master.connect(filter).connect(output).connect(context.destination);
       output.gain.setValueAtTime(0, begin);
-      output.gain.linearRampToValueAtTime(.42, begin + 3);
-      output.gain.setValueAtTime(.42, end - 5);
+      output.gain.linearRampToValueAtTime(.8, begin + 3);
+      output.gain.setValueAtTime(.8, end - 5);
       output.gain.linearRampToValueAtTime(0, end);
       // Low drones, dissonant minor chords and sparse distant bell-like notes.
       tone(55, begin, 48, .12, 'triangle');
