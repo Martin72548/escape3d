@@ -1,3 +1,4 @@
+import { addMuseumBackWall } from './museum-back-wall.js';
 import { createMuseumBatSwarm } from './museum-bat-swarm.js';
 import { createGoldenSerpent } from './golden-serpent.js';
 import { createGregorianAmbience } from './gregorian-ambience.js';
@@ -141,18 +142,7 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
   }
   for(const [x,z,rotation] of [[0,-10,0],[-10,0,Math.PI/2],[10,0,-Math.PI/2],[0,10,Math.PI]]){
    if(z===-10){
-    // A recessed plaster wall spans the room, framed by deep stone reveals.
-    const niche=new THREE.Group();niche.name='Grande niche du mur du fond';root.add(niche);
-    const plaster=new THREE.MeshStandardMaterial({color:0xc4b59b,roughness:.96});
-    box(niche,20,6,.22,plaster,0,3,-10.72).name='Fond lisse de la niche';
-    for(const side of [-1,1]){
-     box(niche,.45,6,1.25,stone,side*9.775,3,-10.12);
-     box(niche,.14,5.4,1.12,darkStone,side*9.49,3,-10.1);
-    }
-    box(niche,19.1,.3,1.25,stone,0,5.85,-10.12);
-    box(niche,19.1,.3,1.25,stone,0,.15,-10.12);
-    box(niche,19.1,.09,.18,darkStone,0,5.66,-9.53);
-    box(niche,19.1,.09,.18,darkStone,0,.34,-9.53);
+    addMuseumBackWall(root,wallStone);
     continue;
    }
    box(root,x===0?20:.3,6,x===0?.3:20,mortar,x,3,z);
