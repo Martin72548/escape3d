@@ -9,7 +9,7 @@ import * as THREE from 'three';
 
 export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  const root=new THREE.Group();root.name='Nivel 4 - Precipicio y pilotis';root.userData.dimensions={width:35,length:35};scene.add(root);
- const bankEdge=10.5,groundY=.22,postRadius=.76,postStep=2.65,postOffset=1;
+ const bankEdge=10.5,groundY=.22,postRadius=.76,postStep=2.65,postOffset=1.25;
  const jumpDistance=Math.hypot(2*postOffset,postStep),jumpDuration=.78;
  const posts=Array.from({length:7},(_,i)=>({x:i%2===0?-postOffset:postOffset,z:(3-i)*postStep}));
  const hasFooting=(x,z)=>Math.abs(z)>=bankEdge||posts.some(post=>Math.hypot(x-post.x,z-post.z)<=postRadius);
@@ -84,7 +84,7 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  const daylight=new THREE.DirectionalLight(0xffe2b4,2.4);daylight.position.set(-12,25,-18);root.add(daylight);
  const fill=new THREE.DirectionalLight(0x99c9dc,1.3);fill.position.set(10,8,12);root.add(fill);
  scene.background=new THREE.Color(0x263b40);scene.fog=new THREE.Fog(0x52696b,55,230);
- prisoner.position.set(0,groundY,14);prisoner.rotation.set(0,Math.PI,0);prisoner.visible=true;
+ prisoner.position.set(0,groundY,14.4);prisoner.rotation.set(0,Math.PI,0);prisoner.visible=true;
  prisoner.userData.victoryCelebrating=false;prisoner.userData.gameWon=false;prisoner.userData.currentLevel=4;prisoner.userData.levelTransition=false;prisoner.userData.lowerPassageOpen=false;prisoner.userData.stairFootTargets=null;
  const bound=value=>THREE.MathUtils.clamp(value,-16.5,16.5);
  prisoner.userData.constrainMovement=(x,z)=>({x:bound(x),y:groundY,z:bound(z)});
