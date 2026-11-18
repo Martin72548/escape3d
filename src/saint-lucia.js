@@ -23,6 +23,23 @@ export async function addSaintLucia(parent) {
 	parent.name='Santa Lucia con vestido azul y halo dorado';
 	const root=new THREE.Group();root.name='Santa Lucia de rostro humano';root.scale.setScalar(1.28);root.visible=false;parent.add(root);
 	const assets=await preloadSaintLucia();
+	// Opaque hair underneath the textured strands also covers failed alpha textures.
+	const hairBase=new THREE.Group();hairBase.name='Chevelure permanente de sainte Lucie';root.add(hairBase);
+	const hairMaterial=new THREE.MeshStandardMaterial({color:0x38251b,roughness:.83});
+	const scalp=new THREE.Mesh(new THREE.SphereGeometry(1,40,28,0,Math.PI*2,0,Math.PI*.49),hairMaterial);
+	scalp.position.set(0,1.565,-.006);scalp.scale.set(.105,.113,.102);hairBase.add(scalp);
+	for(let i=0;i<28;i++){
+		const angle=Math.PI*.48+i/27*Math.PI*1.04;
+		const side=Math.sin(angle),back=Math.cos(angle);
+		const points=[];
+		for(let j=0;j<9;j++){
+			const t=j/8;
+			points.push(new THREE.Vector3(side*(.094+.015*Math.sin(t*Math.PI))+.006*Math.sin(t*8+i),1.625-t*(.39+.045*Math.sin(i*2.1)),back*.096-.012-t*.018));
+		}
+		const lock=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),24,.012,6,false),hairMaterial);
+		lock.castShadow=lock.receiveShadow=true;hairBase.add(lock);
+	}
+	hairBase.traverse(part=>{if(part.isMesh)part.castShadow=part.receiveShadow=true;});
 	const armRigs=[];
 	for(const asset of assets){
 		if(!asset)continue;
@@ -33,7 +50,7 @@ export async function addSaintLucia(parent) {
 			for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material]){
 				if(material.map)material.map.anisotropy=8;
 				if(material.name==='Skin'){material.roughness=.65;material.normalScale?.set(.6,.6);}
-				if(material.name.startsWith('Hair')){material.color.set(0x39281e);material.roughness=.8;}
+				if(material.name.startsWith('Hair')){material.color.set(0x695044);material.roughness=.8;material.alphaTest=.08;material.side=THREE.DoubleSide;material.needsUpdate=true;}
 			}
 			if(mesh.name==='Body'){
 				// The gown covers the body; leave the face, neck and articulated arms.
