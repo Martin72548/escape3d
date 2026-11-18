@@ -17,16 +17,22 @@ export function addMuseumBackWall(parent, stoneMaterial) {
       material[key].offset.set(col * .31 + row * .19, row * .37 + col * .13);
       material[key].needsUpdate = true;
     }
-    material.color.setHSL(.11, .09, .8 + random() * .12);
-    material.bumpScale = .065;
-    const geometry = new RoundedBoxGeometry(20 / 3 - .045, 2.955, .85, 5, .065);
+    material.color.setHSL(.10, .12, .66 + random() * .16);
+    material.bumpScale = .13;
+    material.roughness = 1;
+    const geometry = new RoundedBoxGeometry(20 / 3 - .075, 2.925, .85, 8, .11);
     const positions = geometry.attributes.position;
-    // Small edge chips and shallow tool wear preserve a flat readable face.
+    // Broken edges and broad irregular relief give the blocks a raw quarried face.
     for (let i = 0; i < positions.count; i++) {
       const x = positions.getX(i), y = positions.getY(i), z = positions.getZ(i);
       const edge = Math.max(Math.abs(x) / (10 / 3), Math.abs(y) / 1.5);
       const wear = Math.sin(x * 19 + y * 7) * Math.sin(y * 23 - x * 3);
-      positions.setZ(i, z + wear * (edge > .93 ? .018 : .004));
+      const crag = Math.sin(x * 3.3 + y * 2.7 + row) * Math.cos(y * 5.2 - x * 1.6 + col);
+      positions.setZ(i, z + wear * (edge > .90 ? .045 : .013) + crag * .045);
+      if (edge > .9) {
+        positions.setX(i, x + Math.sin(y * 17 + z * 8) * .022);
+        positions.setY(i, y + Math.sin(x * 11 - z * 7) * .022);
+      }
     }
     geometry.computeVertexNormals();
     const block = new THREE.Mesh(geometry, material);
