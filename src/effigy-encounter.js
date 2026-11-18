@@ -9,6 +9,8 @@ export function createEffigyEncounter(scene, tomb, prisoner) {
   const chunkGeometry = new THREE.DodecahedronGeometry(1,0);
   const rest = [], eyes=[];
   const corpseMeshes=[];
+  const screamMorphs=[];
+  let screamMouth;
   let voiceStarted=false;
   let requested=false, ready=false, age=0, hits=0, model, spine, head;
   const garment=tomb.userData.effigyGarment;
@@ -65,6 +67,33 @@ export function createEffigyEncounter(scene, tomb, prisoner) {
       mesh.geometry=geometry.clone();mesh.geometry.setIndex(buckets.body);
       prepareCorpse(mesh);
     }
+    // Stretch the jaw and lips on the anatomical mesh, rather than scaling the head.
+    for(const {mesh} of corpseMeshes){
+      if(!mesh.morphTargetInfluences)continue;
+      const geometry=mesh.geometry,p=geometry.attributes.position,delta=new Float32Array(p.count*3);
+      for(let i=0;i<p.count;i++){
+        const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+        const front=THREE.MathUtils.smoothstep(z,.025,.085);
+        const center=1-THREE.MathUtils.smoothstep(Math.abs(x),.065,.12);
+        const lower=THREE.MathUtils.smoothstep(y,1.415,1.445)*(1-THREE.MathUtils.smoothstep(y,1.477,1.493));
+        const upper=Math.exp(-Math.pow((y-1.495)/.015,2));
+        delta[i*3]=x*.36*center*front*(lower+upper*.4);
+        delta[i*3+1]=(-.082*lower+.018*upper)*front*center;
+        delta[i*3+2]=-.008*lower*front*center;
+      }
+      const attribute=new THREE.BufferAttribute(delta,3);attribute.name='effigy_scream';
+      const morphs=geometry.morphAttributes.position??=[];
+      const index=morphs.length;morphs.push(attribute);
+      if(geometry.morphAttributes.normal)geometry.morphAttributes.normal.push(new THREE.BufferAttribute(new Float32Array(delta.length),3));
+      mesh.morphTargetInfluences.push(0);mesh.morphTargetDictionary.effigy_scream=index;
+      screamMorphs.push({mesh,index});
+    }
+    if(head){
+      screamMouth=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),new THREE.MeshStandardMaterial({color:0x110505,roughness:.93}));
+      screamMouth.name='Bouche du gisant grande ouverte';
+      screamMouth.position.set(0,1.47,.123);screamMouth.scale.set(.043,.062,.014);screamMouth.visible=false;
+      model.add(screamMouth);model.updateWorldMatrix(true,true);head.attach(screamMouth);
+    }
     if(head)for(const side of [-1,1]){
       const eye=new THREE.Mesh(new THREE.SphereGeometry(.015,12,10),new THREE.MeshStandardMaterial({color:0xff1800,emissive:0xff0800,emissiveIntensity:5}));
       effigy.add(eye);eye.position.set(side*.038,1.59,.092);effigy.updateWorldMatrix(true,true);head.attach(eye);
@@ -87,7 +116,7 @@ export function createEffigyEncounter(scene, tomb, prisoner) {
       }
       piece.visible=false;
     }
-    if(name==='head')eyes.forEach(({eye})=>eye.visible=false);
+    if(name==='head'){eyes.forEach(({eye})=>eye.visible=false);if(screamMouth)screamMouth.visible=false;}
     statueExplosionSound.play();scream.play();
   }
   function hit(){
@@ -115,6 +144,9 @@ export function createEffigyEncounter(scene, tomb, prisoner) {
     if(!requested||!ready||hits>=3||prisoner.userData.dead){if(hits>=3||prisoner.userData.dead)scream.stop();return;}
     if(!voiceStarted){voiceStarted=true;scream.play();}
     age+=dt;
+    const mouthOpen=THREE.MathUtils.smoothstep(age,.1,.85)*(1-THREE.MathUtils.smoothstep(age,4.6,6.1));
+    screamMorphs.forEach(({mesh,index})=>{mesh.morphTargetInfluences[index]=mouthOpen*(.94+Math.sin(age*24)*.06);});
+    if(screamMouth){screamMouth.visible=hits<3&&mouthOpen>.03;screamMouth.scale.y=.062*Math.max(.015,mouthOpen);}
     const transformation=THREE.MathUtils.smoothstep(age,.2,2.8);
     for(const {mesh,material}of corpseMeshes){
       mesh.material=material;
