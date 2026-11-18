@@ -160,7 +160,13 @@ function showMapInFrontOfViewer() {
 }
 
 let guidesVisible = true;
+const chasmJumpDirection = new THREE.Vector3();
 controllers.addEventListener(CMEventTypes.ON_BUTTON_DOWN, (event) => {
+	if (event.handedness === 'left' && event.button === 'ButtonX' && prisoner.userData.jumpAcrossChasm) {
+		renderer.xr.getCamera(camera).getWorldDirection(chasmJumpDirection);
+		prisoner.userData.jumpAcrossChasm(chasmJumpDirection.setY(0));
+		return;
+	}
 	if (event.handedness !== 'right') return;
 	if (event.button === 'ButtonA') {
 		if (mapPanel.visible) mapPanel.visible = false;
@@ -219,6 +225,7 @@ function animate() {
 
 	if(museum.level!==previousLevel){
 		previousLevel=museum.level;
+		if(previousLevel===4)document.querySelector('#first-person-hint').textContent='Arrastra para mirar · WASD para caminar · Espacio para saltar · Clic para lanzar un rayo';
 		if(previousLevel===4&&!renderer.xr.isPresenting&&!firstPerson.active){camera.far=280;camera.updateProjectionMatrix();camera.position.set(6.6,7.8,21);orbitControls.target.set(0,1,5.6);orbitControls.update();}
 	}
 	if(prisoner.userData.victoryCelebrating&&!renderer.xr.isPresenting&&!firstPerson.active){
@@ -232,6 +239,7 @@ function animate() {
 	firstPerson.update();
 	gameOverControls.update(deltaTime);
 	renderer.render(scene, camera);
+	slabSpell.finishRayFrame();
 }
 
 window.addEventListener('resize', resize);

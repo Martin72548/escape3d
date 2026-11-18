@@ -8,7 +8,11 @@ import { createChasmRockMaterial, createChasmRiver } from './chasm-river.js';
 import * as THREE from 'three';
 
 export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
- const root=new THREE.Group();root.name='Nivel 4 - Precipicio y puente de tronco';root.userData.dimensions={width:35,length:35};scene.add(root);
+ const root=new THREE.Group();root.name='Nivel 4 - Precipicio y pilotis';root.userData.dimensions={width:35,length:35};scene.add(root);
+ const bankEdge=10.5,groundY=.22,postRadius=.76,postStep=2.65,postOffset=1;
+ const jumpDistance=Math.hypot(2*postOffset,postStep),jumpDuration=.78;
+ const posts=Array.from({length:7},(_,i)=>({x:i%2===0?-postOffset:postOffset,z:(3-i)*postStep}));
+ const hasFooting=(x,z)=>Math.abs(z)>=bankEdge||posts.some(post=>Math.hypot(x-post.x,z-post.z)<=postRadius);
  const cliffStone=createChasmRockMaterial(),stone=cliffStone.clone();stone.vertexColors=false;
  const earth=new THREE.MeshStandardMaterial({color:0x534d3c,roughness:1});
  const moss=new THREE.MeshStandardMaterial({color:0x48543b,roughness:1});
@@ -44,7 +48,7 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  const goalMaterial=new THREE.MeshStandardMaterial({color:0xffdf68,emissive:0xffad24,emissiveIntensity:.65,roughness:.55});
  for(const angle of [-Math.PI/4,Math.PI/4]){const bar=new THREE.Mesh(new THREE.BoxGeometry(.24,.045,2.7),goalMaterial);bar.rotation.y=angle;bar.receiveShadow=true;goalCross.add(bar);}
  goalCross.userData.destination=true;
- // Longitudinal bark ridges and pores wrap around a single fallen tree.
+ // Longitudinal bark ridges and pores wrap around the upright logs.
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=1024;const ctx=canvas.getContext('2d');
  ctx.fillStyle='#60422a';ctx.fillRect(0,0,512,1024);
  for(let i=0;i<190;i++){
@@ -53,20 +57,23 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  }
  const barkMap=new THREE.CanvasTexture(canvas);barkMap.colorSpace=THREE.SRGBColorSpace;barkMap.wrapS=barkMap.wrapT=THREE.RepeatWrapping;barkMap.repeat.set(2,3);barkMap.anisotropy=8;
  const bark=new THREE.MeshStandardMaterial({map:barkMap,bumpMap:barkMap,bumpScale:.08,roughness:1});
- const trunkGeometry=new THREE.CylinderGeometry(1.05,1.05,27,36,40,true),positions=trunkGeometry.attributes.position;
+ const postHeight=river.depth+2;
+ const trunkGeometry=new THREE.CylinderGeometry(postRadius,.94,postHeight,36,40,true),positions=trunkGeometry.attributes.position;
  for(let i=0;i<positions.count;i++){
   const x=positions.getX(i),y=positions.getY(i),z=positions.getZ(i),angle=Math.atan2(z,x),ridge=1+Math.sin(angle*17+y*.4)*.018;
   positions.setXYZ(i,x*ridge,y,z*ridge);
  }trunkGeometry.computeVertexNormals();
- const trunk=mesh(trunkGeometry,bark,0,-.85,0);trunk.rotation.x=Math.PI/2;trunk.name='Tronco que cruza el precipicio';
- root.userData.wordsReady=addTrunkWords(root,bark).catch(error=>console.warn('Mots du tronc indisponibles :',error));
  const endCanvas=document.createElement('canvas');endCanvas.width=endCanvas.height=512;const endCtx=endCanvas.getContext('2d');endCtx.fillStyle='#bc925b';endCtx.fillRect(0,0,512,512);
  for(let i=0;i<34;i++){endCtx.strokeStyle=i%2?'#725131':'#a27a46';endCtx.lineWidth=1+i%3;endCtx.beginPath();endCtx.ellipse(256,256,5+i*7,5+i*7*.94,.15,0,Math.PI*2);endCtx.stroke();}
  const endMap=new THREE.CanvasTexture(endCanvas);endMap.colorSpace=THREE.SRGBColorSpace;const cutWood=new THREE.MeshStandardMaterial({map:endMap,roughness:1});
- for(const z of [13.5,-13.5]){const end=mesh(new THREE.CircleGeometry(1.05,36),cutWood,0,-.85,z);if(z<0)end.rotation.y=Math.PI;}
- for(const [x,y,z,angle]of [[.95,-.8,1.5,-.8],[-.9,-.7,-2,.9]]){
-  const branch=mesh(new THREE.CylinderGeometry(.12,.32,1.9,12),bark,x,y,z);branch.rotation.z=angle;
+ const capGeometry=new THREE.CircleGeometry(postRadius,36);
+ for(const [i,{x,z}] of posts.entries()){
+  const trunk=mesh(trunkGeometry,bark,x,.2-postHeight/2,z);
+  trunk.name=`Tronco vertical ${i+1}`;
+  const cap=mesh(capGeometry,cutWood,x,.2,z);
+  cap.rotation.x=-Math.PI/2;
  }
+ root.userData.wordsReady=addTrunkWords(root,posts.slice(1,-1),groundY).catch(error=>console.warn('Mots du tronc indisponibles :',error));
  // Light, feathered haze gives depth cues while leaving the whitewater visible.
  const hazeCanvas=document.createElement('canvas');hazeCanvas.width=hazeCanvas.height=128;const hazeCtx=hazeCanvas.getContext('2d');
  const gradient=hazeCtx.createRadialGradient(64,64,0,64,64,64);gradient.addColorStop(0,'rgba(160,184,182,.35)');gradient.addColorStop(1,'rgba(160,184,182,0)');hazeCtx.fillStyle=gradient;hazeCtx.fillRect(0,0,128,128);
@@ -77,19 +84,39 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  const daylight=new THREE.DirectionalLight(0xffe2b4,2.4);daylight.position.set(-12,25,-18);root.add(daylight);
  const fill=new THREE.DirectionalLight(0x99c9dc,1.3);fill.position.set(10,8,12);root.add(fill);
  scene.background=new THREE.Color(0x263b40);scene.fog=new THREE.Fog(0x52696b,55,230);
- prisoner.position.set(0,.22,14);prisoner.rotation.set(0,Math.PI,0);prisoner.visible=true;
+ prisoner.position.set(0,groundY,14);prisoner.rotation.set(0,Math.PI,0);prisoner.visible=true;
  prisoner.userData.victoryCelebrating=false;prisoner.userData.gameWon=false;prisoner.userData.currentLevel=4;prisoner.userData.levelTransition=false;prisoner.userData.lowerPassageOpen=false;prisoner.userData.stairFootTargets=null;
- prisoner.userData.constrainMovement=(x,z)=>{
-  z=THREE.MathUtils.clamp(z,-16.5,16.5);const onLog=z<10.7&&z> -10.7;
-  if(onLog&&Math.abs(x)>.42){
-   if(prisoner.position.z>=10.7)return {x:THREE.MathUtils.clamp(x,-16.5,16.5),y:.22,z:10.7};
-   if(prisoner.position.z<=-10.7)return {x:THREE.MathUtils.clamp(x,-16.5,16.5),y:.22,z:-10.7};
-  }
-  x=THREE.MathUtils.clamp(x,onLog?-.42:-16.5,onLog?.42:16.5);
-  const y=onLog?Math.sqrt(1.05*1.05-x*x)-.85+.02:.22;
-  return {x,y,z};
- };
+ const bound=value=>THREE.MathUtils.clamp(value,-16.5,16.5);
+ prisoner.userData.constrainMovement=(x,z)=>({x:bound(x),y:groundY,z:bound(z)});
  const birds=createHarpyFlock(root),victory=createChasmVictory(root,prisoner,{compact:true,horizontalScale:1.75}),fall=createChasmFall(root,prisoner,river.depth,birds);
+ let jump=null;
+ const blocked=()=>fall.active||victory.active||prisoner.userData.dead||prisoner.userData.gameOver;
+ prisoner.userData.jumpAcrossChasm=direction=>{
+  const {x,z}=prisoner.position;
+  if(jump||blocked()||!hasFooting(x,z))return;
+  const yaw=direction.lengthSq()>0?Math.atan2(direction.x,direction.z):prisoner.rotation.y;
+  let endX=bound(x+Math.sin(yaw)*jumpDistance),endZ=bound(z+Math.cos(yaw)*jumpDistance);
+  const landingPost=posts.find(post=>Math.hypot(post.x-endX,post.z-endZ)<=postRadius+.35);
+  if(landingPost){endX=landingPost.x;endZ=landingPost.z;}
+  jump={x,z,endX,endZ,age:0};
+  prisoner.rotation.y=yaw;
+  prisoner.userData.chasmJumping=true;
+ };
+ function updateCrossing(dt){
+  if(blocked())return;
+  if(!jump){
+   if(!hasFooting(prisoner.position.x,prisoner.position.z))fall.begin();
+   return;
+  }
+  jump.age+=dt;
+  const t=Math.min(1,jump.age/jumpDuration);
+  prisoner.position.set(THREE.MathUtils.lerp(jump.x,jump.endX,t),groundY+4*1.15*t*(1-t),THREE.MathUtils.lerp(jump.z,jump.endZ,t));
+  if(t===1){
+   jump=null;
+   prisoner.userData.chasmJumping=false;
+   if(!hasFooting(prisoner.position.x,prisoner.position.z))fall.begin();
+  }
+ }
  const bodyBox=new THREE.Box3(),partBox=new THREE.Box3(),sweep=new THREE.Vector3();
  function checkBirdContact(flight,previous){
   if(fall.active||victory.active||!flight.active||prisoner.userData.dead||prisoner.position.z>10.5||prisoner.position.z< -10.5)return;
@@ -99,11 +126,11 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
   flight.bird.updateWorldMatrix(true,true);sweep.copy(previous).sub(flight.bird.position);
   let touched=false;
   flight.bird.traverse(part=>{if(touched||!part.isMesh)return;partBox.setFromObject(part);const oldBox=partBox.clone().translate(sweep);partBox.union(oldBox);if(partBox.intersectsBox(bodyBox))touched=true;});
-  if(touched){birds.select(flight);fall.begin(flight.direction);}
+  if(touched){jump=null;prisoner.userData.chasmJumping=false;birds.select(flight);fall.begin(flight.direction);}
  }
  let age=0;
- const wordPickup=createTrunkWordPickup(prisoner,root.userData.wordsReady,onPointEarned,()=>fall.active||victory.active||prisoner.userData.dead||prisoner.userData.gameOver);
- return {root,trunk,river,birds,victory,fall,goalCross,takeWord:wordPickup.take,update(dt){age+=dt;river.update(dt);const previous=birds.flights.map(flight=>({position:flight.bird.position.clone(),pass:flight.pass}));birds.update(dt);birds.flights.forEach((flight,index)=>checkBirdContact(flight,flight.pass!==previous[index].pass?flight.bird.position:previous[index].position));fall.update(dt);
- if(!victory.active&&!fall.active&&isStandingOnGoalCross(prisoner,goalCross)){birds.stop();victory.start();}
+ const wordPickup=createTrunkWordPickup(prisoner,root.userData.wordsReady,onPointEarned,()=>blocked()||jump!==null);
+ return {root,river,birds,victory,fall,goalCross,takeWord:wordPickup.take,update(dt){age+=dt;river.update(dt);updateCrossing(dt);const previous=birds.flights.map(flight=>({position:flight.bird.position.clone(),pass:flight.pass}));birds.update(dt);birds.flights.forEach((flight,index)=>checkBirdContact(flight,flight.pass!==previous[index].pass?flight.bird.position:previous[index].position));fall.update(dt);
+ if(!jump&&!blocked()&&isStandingOnGoalCross(prisoner,goalCross)){birds.stop();victory.start();}
  wordPickup.update(dt);victory.update(dt);mist.forEach((layer,i)=>layer.position.x=Math.sin(age*.08+i)*2);}};
 }

@@ -13,9 +13,12 @@ export function createChasmFall(parent,prisoner,depth,birds){
  const sprayPositions=new Float32Array(180*3),sprayGeometry=new THREE.BufferGeometry();sprayGeometry.setAttribute('position',new THREE.BufferAttribute(sprayPositions,3));
  const spray=new THREE.Points(sprayGeometry,new THREE.PointsMaterial({color:0xecfffb,size:.18,transparent:true,opacity:.9,depthWrite:false}));spray.frustumCulled=false;splash.add(spray);
  let active=false,completed=false,age=0,start=null,side=1,birdStart=null,yaw=0,released=false,drop=null,escape=null,splashAge=0,announced=false;
- const liftDuration=1.8,fallDuration=3,grip=new THREE.Vector3(0,-.96,1.05);
+ let liftDuration=1.8;
+ const fallDuration=3,grip=new THREE.Vector3(0,-.96,1.05);
  function begin(direction){
-  if(active||prisoner.userData.gameWon)return;active=true;start=prisoner.position.clone();side=direction>=0?1:-1;yaw=prisoner.rotation.y;birdStart=birds.bird.position.clone();birds.capture();cloth.visible=true;
+  if(active||prisoner.userData.gameWon)return;active=true;start=prisoner.position.clone();side=direction>=0?1:-1;yaw=prisoner.rotation.y;
+  if(direction===undefined){liftDuration=0;birds.stop();}
+  else{birdStart=birds.bird.position.clone();birds.capture();cloth.visible=true;}
   prisoner.userData.fallen=true;prisoner.userData.gameOver=true;prisoner.userData.chasmFalling=false;
   banner.position.copy(start).add(new THREE.Vector3(0,5,0));banner.rotation.x=-Math.PI/3;
  }
@@ -40,12 +43,14 @@ export function createChasmFall(parent,prisoner,depth,birds){
   }
   if(!released){
    released=true;cloth.visible=false;prisoner.userData.chasmFalling=true;
-   drop=new THREE.Vector3(start.x+side*2.4,start.y+4.8,0);prisoner.position.copy(drop);escape=birds.bird.position.clone();sound.play();
+   drop=liftDuration?new THREE.Vector3(start.x+side*2.4,start.y+4.8,0):start;
+   prisoner.position.copy(drop);if(liftDuration)escape=birds.bird.position.clone();sound.play();
   }
   const t=Math.min(fallDuration,age-liftDuration),fraction=t/fallDuration;
-  prisoner.position.set(drop.x+side*t*.16,THREE.MathUtils.lerp(drop.y,-depth+.2,fraction*fraction),Math.sin(t*2)*.12);
+  const z=THREE.MathUtils.lerp(drop.z,THREE.MathUtils.clamp(drop.z,-4.8,4.8),fraction);
+  prisoner.position.set(drop.x+side*t*.16,THREE.MathUtils.lerp(drop.y,-depth+.2,fraction*fraction),z+Math.sin(t*2)*.12);
   prisoner.rotation.z=side*Math.min(Math.PI*.65,t*2);prisoner.rotation.x=Math.sin(t*3)*.35;
-  if(t<2)birds.carryAt(escape.clone().add(new THREE.Vector3(side*t*10.8,t*2.5,0)),yaw);else birds.stop();
+  if(escape){if(t<2)birds.carryAt(escape.clone().add(new THREE.Vector3(side*t*10.8,t*2.5,0)),yaw);else birds.stop();}
   if(t>=fallDuration){
    prisoner.userData.dead=true;prisoner.userData.chasmFalling=false;completed=true;splash.position.set(prisoner.position.x,-depth+.4,prisoner.position.z);splash.visible=true;splashAge=0;birds.stop();
   }

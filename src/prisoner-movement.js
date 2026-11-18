@@ -28,19 +28,21 @@ export function createPrisonerMovement(prisoner) {
 			return;
 		}
 		if (prisoner.userData.broomStriking || prisoner.userData.victoryCelebrating || prisoner.userData.batDucking || prisoner.userData.snakeHopping || prisoner.userData.scorpionHopping || prisoner.userData.levelTransition || prisoner.userData.denisHopping || prisoner.userData.luciaVictim || prisoner.userData.georgeCaptured) return;
-		if (prisoner.userData.dead || prisoner.userData.fallen || prisoner.userData.waistGrabOwner) {
+		if (prisoner.userData.dead || prisoner.userData.fallen || prisoner.userData.waistGrabOwner || prisoner.userData.chasmJumping) {
 			gait = 0; prisoner.userData.walkingIntensity = 0;
 			legs.forEach(leg => leg.rotation.x = 0);
 			return;
 		}
 
 		move.copy(direction).setY(0);
+		let groundY = prisoner.userData.constrainMovement ? prisoner.userData.constrainMovement(prisoner.position.x, prisoner.position.z).y : baseY;
 		let distance = 0;
 		if (move.lengthSq() > 0) {
 			move.normalize();
 			const oldX = prisoner.position.x, oldZ = prisoner.position.z;
 			if (prisoner.userData.constrainMovement) {
 				const next = prisoner.userData.constrainMovement(oldX + move.x * 2.8 * dt, oldZ + move.z * 2.8 * dt);
+				groundY = next.y;
 				prisoner.position.set(next.x, next.y, next.z);
 			} else {
 				const inPassage = prisoner.userData.currentLevel === 3 && prisoner.userData.lowerPassageOpen;
@@ -65,7 +67,7 @@ export function createPrisonerMovement(prisoner) {
 		prisoner.userData.walkCycle = phase;
 		prisoner.userData.walkingIntensity = gait;
 		legs.forEach((leg, i) => { leg.rotation.x = Math.sin(phase + i * Math.PI) * 0.34 * gait; });
-		prisoner.position.y = baseY + Math.abs(Math.sin(phase * 2)) * 0.012 * gait;
+		prisoner.position.y = groundY + Math.abs(Math.sin(phase * 2)) * 0.012 * gait;
 
 		for (let i = 0; i < arms.length; i++) {
 			const armPhase = phase + i * Math.PI;
