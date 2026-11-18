@@ -43,11 +43,12 @@ export function createSlabSpell(scene, prisoner) {
   const preview = new THREE.Mesh(rayGeometry, rayMaterial);
   preview.scale.setScalar(.000001);
   preview.frustumCulled = false; preview.raycast = () => {};
+  const impactPreview = slabImpacts.prepare(renderer);
   scene.add(preview);
   try {
    if (renderer.compileAsync) await renderer.compileAsync(scene, camera);
    else renderer.compile(scene, camera);
-  } finally { preview.removeFromParent(); }
+  } finally { preview.removeFromParent(); impactPreview.removeFromParent(); }
  }
  function unlockAudio() {
 	ceramicBreak.unlock();wallBricksSound.unlock();
@@ -79,6 +80,8 @@ export function createSlabSpell(scene, prisoner) {
 	const addHole = createSlabHoles(scene);
 	const matrix = new THREE.Matrix4();
 	const activeRays = [];
+	let pendingImpacts = [];
+	let renderedImpacts = [];
 	const rayGeometry = new THREE.CylinderGeometry(0.012, 0.045, 1, 8, 1, true);
 	const rayMaterial = new THREE.MeshBasicMaterial({ color: 0x8cecff, transparent: true, opacity: 0.92, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
 	// Keep the light count stable so firing does not recompile the dungeon materials.
@@ -93,7 +96,7 @@ export function createSlabSpell(scene, prisoner) {
 		scene.add(ray);
 		const flash = rayFlash; flash.intensity = 4;
 		flash.position.copy(point);
-		activeRays.push({ ray, flash, target: point.clone(), life: 0.18 });
+		activeRays.push({ ray, target: point.clone(), life: 0.18, shown: false });
 	}
 	function updateRays() {
 		for (const effect of activeRays) syncHandSpellRay(effect.ray, prisoner, effect.target);
@@ -222,8 +225,23 @@ export function createSlabSpell(scene, prisoner) {
 		emit(shot);
 
 	}
-	function emit({ mesh, instanceId, point, target }) {
-		emitRay(point);
+	function emit(shot) {
+		emitRay(shot.point);
+		pendingImpacts.push(shot);
+	}
+	function finishRayFrame() {
+		for (const effect of activeRays) effect.shown = true;
+		if (pendingImpacts.length) {
+			renderedImpacts.push(...pendingImpacts);
+			pendingImpacts = [];
+		}
+	}
+	function applyImpacts() {
+		const shots = renderedImpacts;
+		renderedImpacts = [];
+		for (const shot of shots) applyImpact(shot);
+	}
+	function applyImpact({ mesh, instanceId, point, target }) {
 		if (target?.userData.spellTarget === 'plant-flower') point = target.getWorldPosition(new THREE.Vector3());
 		const removeSlab = mesh?.isInstancedMesh && mesh.userData.draggableSlabs && instanceId !== undefined && !mesh.userData.removedSlabs?.has(instanceId);
 		if (target?.userData.spellTarget === 'oval-mirror') {
@@ -286,10 +304,12 @@ export function createSlabSpell(scene, prisoner) {
 		if (!target && (mesh?.userData.draggableSlabs || mesh?.name === 'floor')) catEncounter.spawn(point);
 	}
 	function update(dt) {
+		applyImpacts();
 		mirror?.userData.updateMirror(dt);
 		slabImpacts.update(dt);
   for (let index = activeRays.length - 1; index >= 0; index--) {
    const effect = activeRays[index];
+   if (!effect.shown) continue;
    effect.life -= dt;
    effect.ray.material.opacity = Math.max(0, effect.life / 0.18);
    if (effect.life <= 0) {
@@ -317,5 +337,5 @@ export function createSlabSpell(scene, prisoner) {
 		mantisEncounter.update(dt);
 		headScratch.update(dt);
 	}
-	return { cast, update, updateRays, prepare, unlockAudio, addPoint, get score(){return score;}, get isCasting(){return false;}, encounter, roachEncounter, batEncounter, zombieEncounter, mummyEncounter, trollEncounter, spiderEncounter, catEncounter, headScratch };
+	return { cast, update, updateRays, finishRayFrame, applyImpacts, prepare, unlockAudio, addPoint, get score(){return score;}, get isCasting(){return false;}, encounter, roachEncounter, batEncounter, zombieEncounter, mummyEncounter, trollEncounter, spiderEncounter, catEncounter, headScratch };
 }
