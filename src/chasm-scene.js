@@ -1,4 +1,5 @@
 import { isStandingOnGoalCross } from './goal-cross.js';
+import { addTrunkWords } from './trunk-words.js';
 import { createChasmFall } from './chasm-fall.js';
 import { createChasmVictory } from './chasm-victory.js';
 import { createHarpyFlock } from './harpy-flock.js';
@@ -57,6 +58,7 @@ export function buildChasmScene(scene,prisoner){
   positions.setXYZ(i,x*ridge,y,z*ridge);
  }trunkGeometry.computeVertexNormals();
  const trunk=mesh(trunkGeometry,bark,0,-.85,0);trunk.rotation.x=Math.PI/2;trunk.name='Tronco que cruza el precipicio';
+ root.userData.wordsReady=addTrunkWords(root).catch(error=>console.warn('Mots du tronc indisponibles :',error));
  const endCanvas=document.createElement('canvas');endCanvas.width=endCanvas.height=512;const endCtx=endCanvas.getContext('2d');endCtx.fillStyle='#bc925b';endCtx.fillRect(0,0,512,512);
  for(let i=0;i<34;i++){endCtx.strokeStyle=i%2?'#725131':'#a27a46';endCtx.lineWidth=1+i%3;endCtx.beginPath();endCtx.ellipse(256,256,5+i*7,5+i*7*.94,.15,0,Math.PI*2);endCtx.stroke();}
  const endMap=new THREE.CanvasTexture(endCanvas);endMap.colorSpace=THREE.SRGBColorSpace;const cutWood=new THREE.MeshStandardMaterial({map:endMap,roughness:1});
