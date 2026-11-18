@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 import { publicAssetBase } from './public-asset-base.js';
 export function createSepulchralVoice(){
  let context,buffer,ready,output,convolver;
@@ -8,7 +9,7 @@ export function createSepulchralVoice(){
    const Audio=globalThis.AudioContext||globalThis.webkitAudioContext;if(!Audio)return;
    if(!context){
     context=new Audio();
-    output=context.createDynamicsCompressor();output.threshold.value=-24;output.ratio.value=8;output.connect(context.destination);
+    output=context.createDynamicsCompressor();output.threshold.value=-24;output.ratio.value=8;output.connect(getGameAudioOutput(context));
     convolver=context.createConvolver();const impulse=context.createBuffer(2,context.sampleRate*3.8,context.sampleRate);
     for(let c=0;c<2;c++){const data=impulse.getChannelData(c);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/data.length,3);}
     convolver.buffer=impulse;const wet=context.createGain();wet.gain.value=.42;convolver.connect(wet).connect(output);

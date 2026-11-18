@@ -49,6 +49,7 @@ export function createTombPassage(scene,tomb,prisoner,onArrive){
   function tread(y,z){const point=new THREE.Vector3(0,y+.02,z);point.stair=true;path.push(point);}
   for(let i=0;i<6;i++)tread(.2*(i+1),3.3-i*.32);
   for(let i=0;i<29;i++)tread(1.2-i*.2,1.35-i*.32);
+  path.at(-1).lastStair=true;
   path.forEach(point=>tomb.localToWorld(point));
   segmentStart=prisoner.position.clone();
 
@@ -78,23 +79,32 @@ export function createTombPassage(scene,tomb,prisoner,onArrive){
    prisoner.rotation.y+=Math.atan2(Math.sin(yaw-prisoner.rotation.y),Math.cos(yaw-prisoner.rotation.y))*(1-Math.exp(-step*10));
    prisoner.position.lerpVectors(segmentStart,target,t);prisoner.position.y=THREE.MathUtils.lerp(segmentStart.y,target.y,smooth);
    if(target.stair){
+    const halfStance=.115*prisoner.scale.x;
+    const lateral=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
     if(!feet.length){
-     for(const side of [-1,1])feet.push(prisoner.localToWorld(new THREE.Vector3(side*.115,.09,0)));
+     for(const side of [-1,1])feet.push(segmentStart.clone().addScaledVector(lateral,side*halfStance));
     }
     const moving=stepIndex%2;
     if(!footFrom){
-     footFrom=feet[moving].clone();footTo=target.clone();
-     const lateral=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw)).multiplyScalar(moving===0?-.115:.115);
-     footTo.add(lateral);footTo.y=target.y+.09;
+     footFrom=feet[moving].clone();
+     footTo=target.clone().addScaledVector(lateral,moving===0?-halfStance:halfStance);
     }
-    feet[moving].lerpVectors(footFrom,footTo,THREE.MathUtils.smoothstep(t,0,1));feet[moving].y+=Math.sin(Math.PI*t)*.13;
+    // Lift before crossing the riser and set the foot down before transferring weight.
+    const swing=Math.min(1,t/.82),apex=Math.max(footFrom.y,footTo.y)+.12;
+    feet[moving].lerpVectors(footFrom,footTo,THREE.MathUtils.smoothstep(swing,.12,.88));
+    feet[moving].y=swing<.5
+     ?THREE.MathUtils.lerp(footFrom.y,apex,THREE.MathUtils.smoothstep(swing,0,.5))
+     :THREE.MathUtils.lerp(apex,footTo.y,THREE.MathUtils.smoothstep(swing,.5,1));
+    const entry=stepIndex===0?THREE.MathUtils.smoothstep(t,0,.45):1;
+    const exit=target.lastStair?1-THREE.MathUtils.smoothstep(t,.75,1):1;
+    prisoner.position.y-=(.11+.07*Math.sin(Math.PI*t)**2)*entry*exit;
     prisoner.userData.stairFootTargets=feet;
     legs.forEach(leg=>leg.rotation.x=0);
    }else{
     phase+=step*7;legs.forEach((leg,i)=>leg.rotation.x=Math.sin(phase+i*Math.PI)*.32);
    }
    if(t>=1){
-    prisoner.position.copy(target);segmentStart.copy(target);segmentAge=0;waypoint++;
+    segmentStart.copy(target);segmentAge=0;waypoint++;
     if(target.stair){stepIndex++;footFrom=null;footTo=null;}
     if(waypoint>=path.length){
      state='arrived';prisoner.userData.stairFootTargets=null;legs.forEach(leg=>leg.rotation.x=0);

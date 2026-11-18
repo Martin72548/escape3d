@@ -24,7 +24,8 @@ export function createMedievalWalk(person, bones) {
 	}
 	return () => {
 		const amount = person.userData.walkingIntensity ?? 0;
-		if (amount < .001) return;
+		const stairFeet = person.userData.stairFootTargets;
+		if (!stairFeet && amount < .001) return;
 		const phase = person.userData.walkCycle ?? 0;
 		const direction = person.userData.walkingDirection ?? new THREE.Vector3(0, 0, 1);
 		const stance = .62;
@@ -36,6 +37,10 @@ export function createMedievalWalk(person, bones) {
 			const target = rest.clone().addScaledVector(direction, travel * amount);
 			target.y += lift * amount;
 			person.localToWorld(target);
+			if (stairFeet) {
+				target.copy(stairFeet[index]);
+				target.y += rest.y * person.getWorldScale(origin).y;
+			}
 			const hip = thigh.getWorldPosition(new THREE.Vector3());
 			const knee = shin.getWorldPosition(new THREE.Vector3());
 			const ankle = foot.getWorldPosition(new THREE.Vector3());
@@ -52,7 +57,7 @@ export function createMedievalWalk(person, bones) {
 			aim(shin, foot, target);
 			// Keep the sole level during contact; roll off the toes before lifting.
 			foot.quaternion.copy(foot.parent.getWorldQuaternion(parentRotation).invert().multiply(footRotation));
-			const roll = cycle < stance ? .18 * THREE.MathUtils.smoothstep(cycle / stance, .65, 1) : -.12 * Math.sin(Math.PI * swing);
+			const roll = stairFeet ? 0 : cycle < stance ? .18 * THREE.MathUtils.smoothstep(cycle / stance, .65, 1) : -.12 * Math.sin(Math.PI * swing);
 			const lateral = new THREE.Vector3(1, 0, 0).transformDirection(person.matrixWorld);
 			rotation.setFromAxisAngle(lateral, roll * amount).multiply(footRotation);
 			foot.quaternion.copy(foot.parent.getWorldQuaternion(parentRotation).invert().multiply(rotation));

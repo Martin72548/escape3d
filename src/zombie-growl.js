@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 export function createZombieGrowl() {
 	let context=null,active=null;
 	function unlock(){
@@ -24,7 +25,7 @@ export function createZombieGrowl() {
 		const throat=context.createBiquadFilter();throat.type='lowpass';throat.frequency.value=950;throat.Q.value=4;
 		const resonance=context.createBiquadFilter();resonance.type='peaking';resonance.frequency.value=290;resonance.Q.value=2.5;resonance.gain.value=9;
 		const envelope=context.createGain();envelope.gain.setValueAtTime(0,now);envelope.gain.linearRampToValueAtTime(.15*intensity,now+.12);envelope.gain.linearRampToValueAtTime(.11*intensity,now+1.3);envelope.gain.exponentialRampToValueAtTime(.0001,now+duration);
-		voice.connect(voiceGain).connect(throat);bass.connect(bassGain).connect(throat);breath.connect(noiseGain).connect(throat);throat.connect(resonance).connect(envelope).connect(context.destination);
+		voice.connect(voiceGain).connect(throat);bass.connect(bassGain).connect(throat);breath.connect(noiseGain).connect(throat);throat.connect(resonance).connect(envelope).connect(getGameAudioOutput(context));
 		const sources=[voice,bass,tremolo,breath],nodes=[...sources,voiceGain,bassGain,noiseGain,tremoloGain,throat,resonance,envelope];
 		const sound={sources,nodes};active=sound;
 		breath.onended=()=>{if(active===sound){active=null;nodes.forEach(node=>node.disconnect());}};

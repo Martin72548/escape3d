@@ -1,9 +1,10 @@
 import { publicAssetBase } from './public-asset-base.js';
+import { createGameAudio } from './game-audio.js';
 import * as THREE from 'three';
 
 export function createToadTongueAttack(scene, prisoner) {
  const anchor=prisoner.getObjectByName('head-anchor');
- const audio=new Audio(`${publicAssetBase}audio/male-ouch.mp3`);
+ const audio=createGameAudio(`${publicAssetBase}audio/male-ouch.mp3`);
  audio.preload='auto';audio.volume=.95;
  const tongues=new Map(),up=new THREE.Vector3(0,1,0);
  let recoilAge=1,attackCooldown=0,recoilSide=1;
@@ -18,9 +19,9 @@ export function createToadTongueAttack(scene, prisoner) {
  }
  function unlock(){
   // Prime recorded audio during the player's click without an audible cry.
-  audio.muted=true;
+  audio.volume=0;
   const ready=audio.play();
-  ready?.then(()=>{audio.pause();audio.currentTime=0;audio.muted=false;}).catch(()=>{audio.muted=false;});
+  ready?.then(()=>{audio.pause();audio.currentTime=0;audio.volume=.95;}).catch(()=>{audio.volume=.95;});
  }
  function cheek(side){
   prisoner.updateWorldMatrix(true,true);
@@ -28,7 +29,7 @@ export function createToadTongueAttack(scene, prisoner) {
  }
  function impact(side){
   recoilAge=0;recoilSide=side;
-  audio.pause();audio.currentTime=0;audio.muted=false;audio.play().catch(()=>{});
+  audio.pause();audio.currentTime=0;audio.volume=.95;audio.play().catch(()=>{});
  }
  function update(dt,toads){
   attackCooldown=Math.max(0,attackCooldown-dt);

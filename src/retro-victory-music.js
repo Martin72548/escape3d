@@ -1,9 +1,10 @@
-﻿export function createRetroVictoryMusic(){
+import { getGameAudioOutput } from './game-audio.js';
+export function createRetroVictoryMusic(){
  let context=null,requested=false,played=false;
  function unlock(){try{const Audio=globalThis.AudioContext||globalThis.webkitAudioContext;if(!Audio)return;context??=new Audio();context.resume()?.then(()=>{if(requested)play();}).catch(()=>{});}catch{}}
  function play(){
   requested=true;if(played||!context||context.state!=='running')return false;played=true;
-  const start=context.currentTime+.04,beat=.145,master=context.createGain();master.gain.value=.17;master.connect(context.destination);
+  const start=context.currentTime+.04,beat=.145,master=context.createGain();master.gain.value=.17;master.connect(getGameAudioOutput(context));
   const sequence=[[72,1],[76,1],[79,1],[84,3],[79,1],[84,1],[88,2],[86,1],[84,1],[83,1],[79,1],[81,2],[83,2],[84,5],[88,1],[91,1],[96,6]];
   let cursor=0,voices=0;
   function note(midi,time,duration,type,volume){

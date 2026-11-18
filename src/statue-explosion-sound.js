@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 function createExplosionSound(){
  let context=null;
  function unlock(){try{const Audio=globalThis.AudioContext||globalThis.webkitAudioContext;if(!Audio)return;context??=new Audio();context.resume()?.catch(()=>{});}catch{}}
@@ -8,7 +9,7 @@ function createExplosionSound(){
   const source=context.createBufferSource();source.buffer=buffer;
   const filter=context.createBiquadFilter();filter.type='lowpass';filter.frequency.setValueAtTime(2400,now);filter.frequency.exponentialRampToValueAtTime(90,now+duration);
   const envelope=context.createGain();envelope.gain.setValueAtTime(0,now);envelope.gain.linearRampToValueAtTime(.7,now+.012);envelope.gain.exponentialRampToValueAtTime(.0001,now+duration);
-  const compressor=context.createDynamicsCompressor();compressor.threshold.value=-10;compressor.ratio.value=8;compressor.connect(context.destination);
+  const compressor=context.createDynamicsCompressor();compressor.threshold.value=-10;compressor.ratio.value=8;compressor.connect(getGameAudioOutput(context));
   source.connect(filter).connect(envelope).connect(compressor);
   const delay=context.createDelay(1);delay.delayTime.value=.24;const echo=context.createGain();echo.gain.value=.3;envelope.connect(delay).connect(echo).connect(compressor);
   const rumble=context.createOscillator(),bass=context.createGain();rumble.frequency.setValueAtTime(62,now);rumble.frequency.exponentialRampToValueAtTime(22,now+1.5);bass.gain.setValueAtTime(.4,now);bass.gain.exponentialRampToValueAtTime(.0001,now+2);rumble.connect(bass).connect(compressor);

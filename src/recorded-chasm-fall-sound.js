@@ -1,3 +1,4 @@
+import { getGameAudioOutput } from './game-audio.js';
 import { publicAssetBase } from './public-asset-base.js';
 ﻿// Real CC0 field recordings. Full sources are listed in public/audio/SOURCES.md.
 export function createRecordedChasmFallSound(){
@@ -12,9 +13,9 @@ export function createRecordedChasmFallSound(){
   try{
    const [scream,splash]=await ready;if(context.state!=='running')return;const now=context.currentTime;
    const voice=context.createBufferSource(),distance=context.createGain();voice.buffer=scream;
-   distance.gain.setValueAtTime(.85,now);distance.gain.exponentialRampToValueAtTime(.008,now+3);voice.connect(distance).connect(context.destination);
+   distance.gain.setValueAtTime(.85,now);distance.gain.exponentialRampToValueAtTime(.008,now+3);voice.connect(distance).connect(getGameAudioOutput(context));
    voice.start(now,.8,3);voice.onended=()=>{voice.disconnect();distance.disconnect();};
-   const impact=context.createBufferSource(),volume=context.createGain();impact.buffer=splash;volume.gain.value=.8;impact.connect(volume).connect(context.destination);impact.start(now+3);impact.onended=()=>{impact.disconnect();volume.disconnect();};
+   const impact=context.createBufferSource(),volume=context.createGain();impact.buffer=splash;volume.gain.value=.8;impact.connect(volume).connect(getGameAudioOutput(context));impact.start(now+3);impact.onended=()=>{impact.disconnect();volume.disconnect();};
    globalThis.removeEventListener('pointerdown',unlock);globalThis.removeEventListener('keydown',unlock);
   }catch(error){console.warn('No se pudo reproducir la caida grabada:',error);}
  }

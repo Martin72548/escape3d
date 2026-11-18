@@ -2,16 +2,55 @@ import { publicAssetBase } from './public-asset-base.js';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+export function addFittedLuciaHair(root, model) {
+	root.updateWorldMatrix(true,true);
+	const bounds=new THREE.Box3(),point=new THREE.Vector3();
+	const inverse=root.matrixWorld.clone().invert();
+	let headBone;
+	model.traverse(object=>{
+		if(object.isBone&&object.name==='head')headBone=object;
+		if(!object.isSkinnedMesh)return;
+		object.skeleton.update();
+		const indices=object.geometry.attributes.skinIndex,weights=object.geometry.attributes.skinWeight;
+		if(!indices||!weights)return;
+		for(let i=0;i<indices.count;i++){
+			let influence=0;
+			for(let slot=0;slot<4;slot++){
+				let bone=object.skeleton.bones[indices.getComponent(i,slot)];
+				while(bone?.isBone){if(bone.name==='head'){influence+=weights.getComponent(i,slot);break;}bone=bone.parent;}
+			}
+			if(influence<.5)continue;
+			object.getVertexPosition(i,point).applyMatrix4(object.matrixWorld).applyMatrix4(inverse);bounds.expandByPoint(point);
+		}
+	});
+	if(bounds.isEmpty())throw Error('Impossible de mesurer la tete de sainte Lucie');
+	const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+	const hair=new THREE.Group();hair.name='Chevelure ajustee au crane de sainte Lucie';root.add(hair);
+	const material=new THREE.MeshStandardMaterial({color:0x322017,roughness:.8,side:THREE.DoubleSide});
+	const rx=size.x*.56,ry=size.y*.52,rz=size.z*.55;
+	const crownY=bounds.min.y+size.y*.6,cz=center.z-size.z*.075;
+	const cap=new THREE.Mesh(new THREE.SphereGeometry(1,48,32,0,Math.PI*2,0,Math.PI*.53),material);
+	cap.position.set(center.x,crownY,cz);cap.scale.set(rx,ry,rz);hair.add(cap);
+	for(let i=0;i<44;i++){
+		const angle=Math.PI*.43+i/43*Math.PI*1.14,points=[];
+		for(let j=0;j<12;j++){
+			const t=j/11;
+			points.push(new THREE.Vector3(center.x+Math.sin(angle)*(rx*.96+.014*Math.sin(t*Math.PI))+.004*Math.sin(t*10+i),bounds.max.y-.025-t*(size.y+ .26+.025*Math.sin(i)),cz+Math.cos(angle)*rz-.025*t));
+		}
+		const lock=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),28,.012,7,false),material);hair.add(lock);
+	}
+	hair.traverse(part=>{if(part.isMesh){part.castShadow=part.receiveShadow=true;part.frustumCulled=false;}});
+	root.updateWorldMatrix(true,true);if(headBone)headBone.attach(hair);
+	hair.userData.fittedHeadBounds={min:bounds.min.toArray(),max:bounds.max.toArray()};
+	return hair;
+}
+
 let preparedAssets;
 export function preloadSaintLucia() {
 	if (!preparedAssets) {
 		const loader = new GLTFLoader();
 		preparedAssets = Promise.all([
 			loader.loadAsync(`${publicAssetBase}models/prisoner/base_body.glb`),
-			loader.loadAsync(`${publicAssetBase}models/saint-lucia/hair_long01.glb`).catch(error => {
-				console.warn('Cheveux de sainte Lucie indisponibles :', error);
-				return null;
-			}),
 		]);
 		preparedAssets.catch(() => { preparedAssets = null; });
 	}
@@ -23,23 +62,6 @@ export async function addSaintLucia(parent) {
 	parent.name='Santa Lucia con vestido azul y halo dorado';
 	const root=new THREE.Group();root.name='Santa Lucia de rostro humano';root.scale.setScalar(1.28);root.visible=false;parent.add(root);
 	const assets=await preloadSaintLucia();
-	// Opaque hair underneath the textured strands also covers failed alpha textures.
-	const hairBase=new THREE.Group();hairBase.name='Chevelure permanente de sainte Lucie';root.add(hairBase);
-	const hairMaterial=new THREE.MeshStandardMaterial({color:0x38251b,roughness:.83});
-	const scalp=new THREE.Mesh(new THREE.SphereGeometry(1,40,28,0,Math.PI*2,0,Math.PI*.49),hairMaterial);
-	scalp.position.set(0,1.565,-.006);scalp.scale.set(.105,.113,.102);hairBase.add(scalp);
-	for(let i=0;i<28;i++){
-		const angle=Math.PI*.48+i/27*Math.PI*1.04;
-		const side=Math.sin(angle),back=Math.cos(angle);
-		const points=[];
-		for(let j=0;j<9;j++){
-			const t=j/8;
-			points.push(new THREE.Vector3(side*(.094+.015*Math.sin(t*Math.PI))+.006*Math.sin(t*8+i),1.625-t*(.39+.045*Math.sin(i*2.1)),back*.096-.012-t*.018));
-		}
-		const lock=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),24,.012,6,false),hairMaterial);
-		lock.castShadow=lock.receiveShadow=true;hairBase.add(lock);
-	}
-	hairBase.traverse(part=>{if(part.isMesh)part.castShadow=part.receiveShadow=true;});
 	const armRigs=[];
 	for(const asset of assets){
 		if(!asset)continue;
@@ -87,6 +109,7 @@ export async function addSaintLucia(parent) {
 			model.updateWorldMatrix(true,true);
 		}
 	}
+	addFittedLuciaHair(root, assets[0].scene);
 	const size=128,data=new Uint8Array(size*size*4);
 	for(let y=0;y<size;y++)for(let x=0;x<size;x++){const v=168+Math.sin(x*Math.PI)*9+Math.cos(y*Math.PI)*9+Math.sin(x*.3+y*.12)*4;data.set([v,v,v,255],(y*size+x)*4);}
 	const weave=new THREE.DataTexture(data,size,size);weave.wrapS=weave.wrapT=THREE.RepeatWrapping;weave.repeat.set(3,5);weave.magFilter=weave.minFilter=THREE.LinearFilter;weave.needsUpdate=true;
