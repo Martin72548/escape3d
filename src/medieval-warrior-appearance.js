@@ -91,6 +91,39 @@ export async function installMedievalPrisonerAppearance(person, fallback) {
 
 		const bones = new Map();
 		model.traverse(object => { if (object.isBone) bones.set(object.name, object); });
+		// The medieval rig has eyeball bones but no eyelid morph targets.
+		const eyelids = [];
+		const headBone = bones.get('head_4');
+		if (headBone && bones.has('eyeR_2') && bones.has('eyeL_3')) {
+			const skin = new THREE.MeshStandardMaterial({ color: 0xb98268, roughness: .92 });
+			const crease = new THREE.MeshStandardMaterial({ color: 0x674036, roughness: .94 });
+			const lidGeometry = new THREE.SphereGeometry(1, 20, 12);
+			const creasePath = new THREE.QuadraticBezierCurve3(
+				new THREE.Vector3(-.023, -.001, .006),
+				new THREE.Vector3(0, -.007, .012),
+				new THREE.Vector3(.023, -.001, .006),
+			);
+			const creaseGeometry = new THREE.TubeGeometry(creasePath, 14, .0011, 6, false);
+			for (const name of ['eyeR_2', 'eyeL_3']) {
+				const eye = bones.get(name);
+				const center = model.worldToLocal(eye.getWorldPosition(new THREE.Vector3()));
+				center.z += .028;
+				const cover = new THREE.Mesh(lidGeometry, skin);
+				cover.name = 'trance-eyelid';
+				cover.scale.set(.028, .012, .009);
+				const seam = new THREE.Mesh(creaseGeometry, crease);
+				for (const part of [cover, seam]) {
+					part.position.copy(center);
+					part.visible = false;
+					part.layers.set(firstPerson ? 1 : 0);
+					part.userData.firstPersonLayerMask = 1;
+					part.raycast = () => {};
+					model.add(part);
+					headBone.attach(part);
+					eyelids.push(part);
+				}
+			}
+		}
 		const castingHand = bones.get('handR_48');
 		if (castingHand) {
 			const origin = new THREE.Object3D();
@@ -136,9 +169,12 @@ export async function installMedievalPrisonerAppearance(person, fallback) {
 		const updateSleep = createSleepingPose(person, bones);
 		const restBones = [...bones.values()].map(bone => ({ bone, position: bone.position.clone(), quaternion: bone.quaternion.clone(), scale: bone.scale.clone() }));
 		person.userData.headParts.push(...headParts);
+		person.userData.headParts.push(...eyelids);
 		person.userData.updateAppearance = dt => {
 			castingPose.restore();
 			updateFace?.(dt);
+			const closeEyes = person.userData.firstSpellTrance && headParts.some(part => part.visible);
+			for (const lid of eyelids) lid.visible = !!closeEyes;
 			// Start from one coherent skeleton. Retargeting every joint in world
 			// space while its parent still carries yesterday's IK pose stretches
 			// the links during the seated-to-standing transition.
@@ -155,8 +191,9 @@ export async function installMedievalPrisonerAppearance(person, fallback) {
 				desired.decompose(bone.position, bone.quaternion, bone.scale);
 				bone.updateWorldMatrix(false, false);
 			}
-			updateWalk();
+			if (!person.userData.stairFootTargets) updateWalk();
 			castingPose.apply(dt);
+			if (person.userData.stairFootTargets) updateWalk();
 			updateElbows(updateBroomGrip());
 			if (person.userData.broomImpactPending) {
 				const impact = person.userData.broomImpactPending;

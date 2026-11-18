@@ -46,6 +46,7 @@ export function createSlabSpell(scene, prisoner) {
   const impactPreview = slabImpacts.prepare(renderer);
   scene.add(preview);
   try {
+   renderer.initTexture(glowMap);
    if (renderer.compileAsync) await renderer.compileAsync(scene, camera);
    else renderer.compile(scene, camera);
   } finally { preview.removeFromParent(); impactPreview.removeFromParent(); }
@@ -87,6 +88,48 @@ export function createSlabSpell(scene, prisoner) {
 	// Keep the light count stable so firing does not recompile the dungeon materials.
 	const rayFlash = new THREE.PointLight(0x62dfff, 0, 1.8);
 	scene.add(rayFlash);
+	const tranceDuration = 2;
+	let firstShotStarted = false, tranceShot = null, tranceAge = 0;
+	const glowCanvas = document.createElement('canvas');
+	glowCanvas.width = glowCanvas.height = 128;
+	const glowContext = glowCanvas.getContext('2d');
+	const gold = glowContext.createRadialGradient(64, 64, 0, 64, 64, 64);
+	gold.addColorStop(0, 'rgba(255,210,94,.75)');
+	gold.addColorStop(.54, 'rgba(255,176,43,.38)');
+	gold.addColorStop(1, 'rgba(255,145,0,0)');
+	glowContext.fillStyle = gold;
+	glowContext.fillRect(0, 0, 128, 128);
+	const glowMap = new THREE.CanvasTexture(glowCanvas);
+	glowMap.colorSpace = THREE.SRGBColorSpace;
+	const aura = new THREE.Sprite(new THREE.SpriteMaterial({
+		map: glowMap, opacity: 0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+	}));
+	aura.name = 'Aura dorada del primer hechizo';
+	aura.raycast = () => {};
+	aura.frustumCulled = false;
+	const tranceLight = new THREE.PointLight(0xffbf44, 0, 7);
+	scene.add(aura, tranceLight);
+	function updateTrance(dt) {
+		if (!tranceShot) return;
+		tranceAge += dt;
+		const cancelled = prisoner.userData.dead || prisoner.userData.fallen || prisoner.userData.gameOver;
+		if (!cancelled && tranceAge < tranceDuration) {
+			const strength = THREE.MathUtils.smoothstep(tranceAge, 0, .28) *
+				(1 - THREE.MathUtils.smoothstep(tranceAge, 1.7, tranceDuration));
+			aura.position.copy(prisoner.localToWorld(new THREE.Vector3(0, .95, 0)));
+			aura.scale.set(2.25 * prisoner.scale.x, 2.55 * prisoner.scale.y, 1);
+			aura.material.opacity = strength * .78;
+			tranceLight.position.copy(prisoner.localToWorld(new THREE.Vector3(0, 1.12, .48)));
+			tranceLight.intensity = strength * 15;
+			return;
+		}
+		const shot = tranceShot;
+		tranceShot = null;
+		prisoner.userData.firstSpellTrance = false;
+		aura.material.opacity = 0;
+		tranceLight.intensity = 0;
+		if (!cancelled) fire(shot);
+	}
 	function emitRay(point) {
 		prisoner.userData.castWand?.(point);
 		const ray = new THREE.Mesh(rayGeometry, rayMaterial.clone());
@@ -189,6 +232,7 @@ export function createSlabSpell(scene, prisoner) {
 		return false;
 	}
 	function cast(hit) {
+		if (tranceShot || trollEncounter.dead) return;
 		if (prisoner.userData.broomMode) {
 			ceramicBreak.unlock(); bowlPlant.unlockAudio();
 			prisoner.userData.swingBroom?.(() => {
@@ -211,15 +255,24 @@ export function createSlabSpell(scene, prisoner) {
 		bowlPlant.unlockAudio();
 		if (hit.target?.userData.spellTarget === 'right-wall') zombieEncounter.unlockAudio();
 		if (hit.target?.userData.spellTarget === 'mummy-wall') mummyEncounter.unlockAudio();
-		if (hit.mesh?.userData.draggableSlabs && hit.point) {
-			const direction = hit.point.clone().sub(prisoner.getWorldPosition(new THREE.Vector3())).setY(0);
+		const shot = { ...hit, point: hit.point.clone() };
+		if (!firstShotStarted) {
+			firstShotStarted = true;
+			tranceShot = shot;
+			prisoner.userData.firstSpellTrance = true;
+			return;
+		}
+		fire(shot);
+	}
+	function fire(shot) {
+		if (shot.mesh?.userData.draggableSlabs) {
+			const direction = shot.point.clone().sub(prisoner.getWorldPosition(new THREE.Vector3())).setY(0);
 			if (direction.lengthSq() > 0.0001) prisoner.rotation.y = Math.atan2(direction.x, direction.z);
 		}
-		const shot = { ...hit, point: hit.point.clone() };
 		if(trollEncounter.dead)return;
 		if(trollEncounter.stunned){emit({point:shot.point});return;}
 		if (encounter.incapacitated && shot.target !== encounter.snake) { emit({point:shot.point}); return; }
-		if ((zombieEncounter.grabbing || mummyEncounter.grabbing) && hit.target !== prisoner.userData.waistGrabOwner) { emit(shot); return; }
+		if ((zombieEncounter.grabbing || mummyEncounter.grabbing) && shot.target !== prisoner.userData.waistGrabOwner) { emit(shot); return; }
 		const handler=targetEncounter(shot.target);
 		if(handler){if(handler.target(shot.target))shot.point.copy(aimPoint(shot.target));else{shot.target=null;shot.mesh=null;}}
 		emit(shot);
@@ -305,6 +358,7 @@ export function createSlabSpell(scene, prisoner) {
 	}
 	function update(dt) {
 		applyImpacts();
+		updateTrance(dt);
 		mirror?.userData.updateMirror(dt);
 		slabImpacts.update(dt);
   for (let index = activeRays.length - 1; index >= 0; index--) {

@@ -28,7 +28,7 @@ export function createPrisonerMovement(prisoner) {
 			return;
 		}
 		if (prisoner.userData.broomStriking || prisoner.userData.victoryCelebrating || prisoner.userData.batDucking || prisoner.userData.snakeHopping || prisoner.userData.scorpionHopping || prisoner.userData.levelTransition || prisoner.userData.denisHopping || prisoner.userData.luciaVictim || prisoner.userData.georgeCaptured) return;
-		if (prisoner.userData.dead || prisoner.userData.fallen || prisoner.userData.waistGrabOwner || prisoner.userData.chasmJumping) {
+		if (prisoner.userData.dead || prisoner.userData.fallen || prisoner.userData.waistGrabOwner || prisoner.userData.chasmJumping || prisoner.userData.firstSpellTrance) {
 			gait = 0; prisoner.userData.walkingIntensity = 0;
 			legs.forEach(leg => leg.rotation.x = 0);
 			return;
