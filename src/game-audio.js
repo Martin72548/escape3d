@@ -1,3 +1,4 @@
+import { translate } from './language.js';
 const preferenceKey = 'escape3d-sound-muted';
 let muted = false;
 try {
@@ -11,7 +12,8 @@ const buttons = new Set();
 
 function updateButton(button) {
 	button.setAttribute('aria-pressed', String(muted));
-	button.title = muted ? 'Activar sonido' : 'Silenciar sonido';
+	button.setAttribute('aria-label', translate('Couper le son', 'Silenciar sonido'));
+	button.title = muted ? translate('Activer le son', 'Activar sonido') : translate('Couper le son', 'Silenciar sonido');
 }
 
 function applyMute(value) {
