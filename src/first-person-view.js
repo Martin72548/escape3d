@@ -7,16 +7,21 @@ export function enableFirstPersonView({ camera, prisoner, renderer, orbitControl
 	const eye = new THREE.Vector3(), direction = new THREE.Vector3();
 	let active = false, yaw = 0, pitch = 0, drag = null;
 	const headLayers = new Map();
+	function hideHeadParts() {
+		for (const part of prisoner.userData.headParts ?? []) {
+			if (!headLayers.has(part)) headLayers.set(part, part.userData.firstPersonLayerMask ?? part.layers.mask);
+			part.layers.set(1);
+		}
+	}
 	function setActive(value) {
 		if (active === value) return;
 		active = value; drag = null;
+		prisoner.userData.firstPersonActive = active;
 		if (active) {
 			orbitControls.update();
 			savedPosition.copy(camera.position); savedTarget.copy(orbitControls.target);
 			yaw = prisoner.rotation.y; pitch = 0;
-			for (const part of prisoner.userData.headParts ?? []) {
-				headLayers.set(part, part.layers.mask); part.layers.set(1);
-			}
+			hideHeadParts();
 			orbitControls.enabled = false;
 			update();
 		} else {
@@ -49,6 +54,7 @@ export function enableFirstPersonView({ camera, prisoner, renderer, orbitControl
 	renderer.xr.addEventListener('sessionend', () => { button.disabled = false; });
 	function update() {
 		if (!active || renderer.xr.isPresenting) return;
+		hideHeadParts();
 		prisoner.updateWorldMatrix(true, false);
 		eye.set(0, 1.68, .1); prisoner.localToWorld(eye); camera.position.copy(eye);
 		direction.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));

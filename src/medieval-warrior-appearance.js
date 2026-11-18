@@ -44,7 +44,7 @@ export async function installMedievalPrisonerAppearance(person, fallback) {
 		const center = bounds.getCenter(new THREE.Vector3());
 		model.scale.setScalar(1.78 / (size.y || 1));
 		model.position.set(-center.x * model.scale.x, -bounds.min.y * model.scale.y, -center.z * model.scale.z);
-		const firstPerson = person.userData.headParts?.some(part => part.layers.mask === 2);
+		const firstPerson = !!person.userData.firstPersonActive;
 		person.traverse(object => { if (object.isMesh) object.layers.set(2); });
 		for (const name of ['Varita mágica del prisionero', 'Escoba mágica del prisionero']) {
 			person.getObjectByName(name)?.traverse(object => { if (object.isMesh) object.layers.set(0); });
@@ -57,19 +57,33 @@ export async function installMedievalPrisonerAppearance(person, fallback) {
 		const inversePerson = person.matrixWorld.clone().invert();
 		for (const mesh of skinnedMeshes) {
 			const geometry = mesh.geometry, index = geometry.index;
+			const skinIndices = geometry.attributes.skinIndex, skinWeights = geometry.attributes.skinWeight;
+			function headVertex(id) {
+				if (skinIndices && skinWeights) {
+					let weight = 0;
+					for (let slot = 0; slot < 4; slot++) {
+						let bone = mesh.skeleton.bones[skinIndices.getComponent(id, slot)];
+						while (bone?.isBone) {
+							if (bone.name === 'head_4' || bone.name === 'neck_5') { weight += skinWeights.getComponent(id, slot); break; }
+							bone = bone.parent;
+						}
+					}
+					if (weight > .25) return true;
+				}
+				mesh.getVertexPosition(id, vertex).applyMatrix4(transform);
+				return vertex.y > 1.5;
+			}
 			const head = [], body = [];
 			const transform = inversePerson.clone().multiply(mesh.matrixWorld);
 			for (let i = 0; i < (index?.count ?? geometry.attributes.position.count); i += 3) {
 				const ids = [0, 1, 2].map(offset => index ? index.getX(i + offset) : i + offset);
-				const isHead = ids.every(id => {
-					mesh.getVertexPosition(id, vertex).applyMatrix4(transform);
-					return vertex.y > 1.5;
-				});
+				const isHead = ids.some(headVertex);
 				(isHead ? head : body).push(...ids);
 			}
 			const headGeometry = geometry.clone(); headGeometry.setIndex(head);
 			const headMesh = mesh.clone(); headMesh.geometry = headGeometry;
 			headMesh.name = 'medieval-head'; headMesh.layers.set(firstPerson ? 1 : 0);
+			headMesh.userData.firstPersonLayerMask = 1;
 			mesh.parent.add(headMesh); headParts.push(headMesh);
 			mesh.geometry = geometry.clone(); mesh.geometry.setIndex(body);
 			geometry.dispose();
