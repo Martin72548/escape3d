@@ -12,14 +12,32 @@ export function createTombPassage(scene,tomb,prisoner,onArrive){
  const lid=tomb.userData.lid,stone=tomb.userData.stoneMaterial;
  let state='closed',time=0,effectAge=0,phase=0,waypoint=0,triggered=false,segmentAge=0,segmentStart=null,stepIndex=0,footFrom=null,footTo=null;
  const feet=[],legs=prisoner.userData.walkingLegs||[];
+ const legRest=legs.map(leg=>leg.position.clone());
+ const descendingTreads=[];
  const debris=[],dust=[],path=[];
  const stairs=new THREE.Group();stairs.name='Escalera descendente dentro de la tumba';stairs.visible=false;tomb.add(stairs);
  function block(w,h,d,x,y,z,material=stone){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);mesh.position.set(x,y,z);mesh.castShadow=mesh.receiveShadow=true;stairs.add(mesh);return mesh;}
  // The first steps start at the broken lid; the flight continues below the museum floor.
  for(let i=0;i<29;i++){
   const y=1.2-i*.2,z=1.35-i*.32;
-  const step=block(1.18,.18,.32,0,y-.09,z);step.name='Peldano descendente de piedra '+(i+1);
-  if(i>0){const h=Math.min(2.3,Math.max(.1,.9-y));block(.14,h,.35,-.68,y+h/2-.1,z);block(.14,h,.35,.68,y+h/2-.1,z);}
+  const step=block(1.56,.2,.32,0,y-.1,z);step.name='Peldano descendente de piedra '+(i+1);
+  descendingTreads.push({y,z,back:z+.16,front:z-.16});
+  // Retaining stone follows the underside of the steps, leaving the sides clear for the arms.
+  for(const x of [-.85,.85])block(.14,.42,.32,x,y-.21,z);
+ }
+ const stairProbe=new THREE.Vector3(),footLocal=new THREE.Vector3();
+ function treadClearance(point,heel,offset=.02){
+  tomb.worldToLocal(stairProbe.copy(point));
+  const z=stairProbe.z;
+  let minY=point.y;
+  for(const tread of descendingTreads){
+   // The heel has to clear the nosing before the sole can drop to the next tread.
+   if(z>tread.back+.32)continue;
+   const weight=THREE.MathUtils.smoothstep(z,tread.front-heel-.06,tread.front-heel);
+   const supportedY=point.y+tread.y+offset-stairProbe.y;
+   if(supportedY>point.y)minY=Math.max(minY,THREE.MathUtils.lerp(point.y,supportedY,weight));
+  }
+  return minY;
  }
  // The exterior steps belong to the permanent tomb, so they are visible before the ray.
  const glow=new THREE.PointLight(0xffb369,9,7,2);glow.position.set(0,-.5,.2);stairs.add(glow);
@@ -28,7 +46,7 @@ export function createTombPassage(scene,tomb,prisoner,onArrive){
   if(triggered||prisoner.userData.dead||prisoner.userData.georgeCaptured)return;
   triggered=true;state='breaking';time=0;lid.visible=false;stairs.visible=true;prisoner.userData.levelTransition=true;statueExplosionSound.play();
   if(tomb.userData.floorCover)tomb.userData.floorCover.visible=false;
-  for(const mesh of tomb.userData.passageEndStones||[])mesh.visible=false;
+  if(tomb.userData.shell)tomb.userData.shell.visible=false;
   tomb.updateWorldMatrix(true,true);
   for(let i=0;i<65;i++){
    const mesh=new THREE.Mesh(chunkGeometry,stone);mesh.name='Piedra de la tumba expulsada al lateral';mesh.userData.tombDebris=true;mesh.position.copy(tomb.localToWorld(new THREE.Vector3((Math.random()-.5)*1.55,1.2+Math.random()*.5,(Math.random()-.5)*3.15)));mesh.scale.set(.07+Math.random()*.19,.06+Math.random()*.15,.08+Math.random()*.2);mesh.castShadow=true;scene.add(mesh);
@@ -47,9 +65,9 @@ export function createTombPassage(scene,tomb,prisoner,onArrive){
    path.push(new THREE.Vector3(Math.abs(local.x)<1.45?side*1.6:local.x,.02,3.9));
   }
   path.push(new THREE.Vector3(0,.02,3.9),new THREE.Vector3(0,.02,3.62));
-  function tread(y,z){const point=new THREE.Vector3(0,y+.02,z);point.stair=true;path.push(point);}
+  function tread(y,z,descending=false){const point=new THREE.Vector3(0,y+.02,z);point.stair=true;point.descending=descending;path.push(point);}
   for(let i=0;i<6;i++)tread(.2*(i+1),3.3-i*.32);
-  for(let i=0;i<29;i++)tread(1.2-i*.2,1.35-i*.32);
+  for(const {y,z} of descendingTreads)tread(y,z,true);
   path.at(-1).lastStair=true;
   path.forEach(point=>tomb.localToWorld(point));
   segmentStart=prisoner.position.clone();
@@ -89,6 +107,10 @@ export function createTombPassage(scene,tomb,prisoner,onArrive){
     if(!footFrom){
      footFrom=feet[moving].clone();
      footTo=target.clone().addScaledVector(lateral,moving===0?-halfStance:halfStance);
+     if(target.descending){
+      const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
+      footTo.addScaledVector(forward,Math.max(0,.105*prisoner.scale.z-.09));
+     }
     }
     // Lift before crossing the riser and set the foot down before transferring weight.
     const swing=Math.min(1,t/.82),apex=Math.max(footFrom.y,footTo.y)+.12;
@@ -99,8 +121,19 @@ export function createTombPassage(scene,tomb,prisoner,onArrive){
     const entry=stepIndex===0?THREE.MathUtils.smoothstep(t,0,.45):1;
     const exit=target.lastStair?1-THREE.MathUtils.smoothstep(t,.75,1):1;
     prisoner.position.y-=(.11+.07*Math.sin(Math.PI*t)**2)*entry*exit;
+    if(target.descending){
+     feet[moving].y=treadClearance(feet[moving],.105*prisoner.scale.z);
+     // Keep the body above the trailing edge until it has cleared the higher tread.
+     prisoner.position.y=treadClearance(prisoner.position,.08*prisoner.scale.z,-.09);
+    }
     prisoner.userData.stairFootTargets=feet;
-    legs.forEach(leg=>leg.rotation.x=0);
+    legs.forEach((leg,i)=>{
+     leg.rotation.x=0;
+     if(!prisoner.userData.updateAppearance){
+      prisoner.worldToLocal(footLocal.copy(feet[i]));
+      leg.position.set(footLocal.x,legRest[i].y+footLocal.y,footLocal.z);
+     }
+    });
    }else{
     phase+=step*7;legs.forEach((leg,i)=>leg.rotation.x=Math.sin(phase+i*Math.PI)*.32);
    }
@@ -108,7 +141,7 @@ export function createTombPassage(scene,tomb,prisoner,onArrive){
     segmentStart.copy(target);segmentAge=0;waypoint++;
     if(target.stair){stepIndex++;footFrom=null;footTo=null;}
     if(waypoint>=path.length){
-     state='arrived';prisoner.userData.stairFootTargets=null;legs.forEach(leg=>leg.rotation.x=0);
+     state='arrived';prisoner.userData.stairFootTargets=null;legs.forEach((leg,i)=>{leg.rotation.x=0;leg.position.copy(legRest[i]);});
      for(const part of debris)part.mesh.removeFromParent();for(const mesh of dust){mesh.removeFromParent();mesh.material.dispose();}
      onArrive();
     }

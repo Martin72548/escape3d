@@ -21,10 +21,10 @@ export function createStoneSarcophagus(parent){
  const map=texture(color);map.colorSpace=THREE.SRGBColorSpace;
  const stone=new THREE.MeshStandardMaterial({map,normalMap:texture(normal),normalScale:new THREE.Vector2(.8,.8),roughnessMap:texture(rough),roughness:1,metalness:0});
  const recess=stone.clone();recess.color.set(0x777d69);const lightStone=stone.clone();lightStone.color.set(0xd5d2b9);const moss=stone.clone();moss.color.set(0x626b46);
- function mesh(geometry,material=stone,container=root){const m=new THREE.Mesh(geometry,material);m.castShadow=m.receiveShadow=true;container.add(m);return m;}
+ const shell=new THREE.Group();shell.name='Parois sculptées du sarcophage';root.add(shell);root.userData.shell=shell;
+ function mesh(geometry,material=stone,container=shell){const m=new THREE.Mesh(geometry,material);m.castShadow=m.receiveShadow=true;container.add(m);return m;}
  const lid=new THREE.Group();lid.name='Tapa superior rompible del sarcofago';root.add(lid);root.userData.lid=lid;root.userData.stoneMaterial=stone;
- root.userData.passageEndStones=[];
- function block(w,h,d,x,y,z,material=stone){const m=mesh(new RoundedBoxGeometry(w,h,d,3,Math.min(.027,w*.15,h*.18,d*.15)),material,y>=.95?lid:root);m.position.set(x,y,z);if(Math.abs(z)>1.45&&Math.abs(x)<.6&&y<.95)root.userData.passageEndStones.push(m);return m;}
+ function block(w,h,d,x,y,z,material=stone){const m=mesh(new RoundedBoxGeometry(w,h,d,3,Math.min(.027,w*.15,h*.18,d*.15)),material,y>=.95?lid:shell);m.position.set(x,y,z);return m;}
  function frame(w,h,d,y,material=stone){const edge=.16;for(const side of [-1,1]){block(edge,h,d,side*(w-edge)/2,y,0,material);block(w-edge*2,h,edge,0,y,side*(d-edge)/2,material);}}
  function oval(x,y,z,sx,sy,sz,container=root){const m=mesh(new THREE.SphereGeometry(1,32,24),stone,container);m.position.set(x,y,z);m.scale.set(sx,sy,sz);return m;}
  frame(1.84,.15,3.56,.075,recess);frame(1.75,.14,3.47,.21);
