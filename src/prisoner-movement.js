@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export function createPrisonerMovement(prisoner) {
+export function createPrisonerMovement(prisoner, { scripted = false } = {}) {
 	const legs = prisoner.userData.walkingLegs ?? [];
 	const arms = [prisoner.getObjectByName('casting-arm'), prisoner.getObjectByName('left-arm')];
 	const elbows = [prisoner.getObjectByName('casting-elbow'), prisoner.getObjectByName('left-elbow')];
@@ -12,12 +12,11 @@ export function createPrisonerMovement(prisoner) {
 	const gaitRotation = new THREE.Quaternion();
 	const walkingDirection = new THREE.Vector3(0, 0, 1);
 	const inverseRotation = new THREE.Quaternion();
-	prisoner.userData.walkingDirection = walkingDirection;
 	let phase = 0;
 	let gait = 0;
 	const baseY = prisoner.userData.standingY ?? prisoner.position.y;
 
-	function update(dt, direction, turn = true) {
+	function update(dt, direction, turn = true, speed = 2.8) {
 		if (prisoner.userData.wakingUp && !prisoner.userData.introWalking) return;
 		if (prisoner.userData.sleeping) {
 			return;
@@ -40,15 +39,17 @@ export function createPrisonerMovement(prisoner) {
 		if (move.lengthSq() > 0) {
 			move.normalize();
 			const oldX = prisoner.position.x, oldZ = prisoner.position.z;
-			if (prisoner.userData.constrainMovement) {
-				const next = prisoner.userData.constrainMovement(oldX + move.x * 2.8 * dt, oldZ + move.z * 2.8 * dt);
+			if (scripted) {
+				prisoner.position.addScaledVector(move, speed * dt);
+			} else if (prisoner.userData.constrainMovement) {
+				const next = prisoner.userData.constrainMovement(oldX + move.x * speed * dt, oldZ + move.z * speed * dt);
 				groundY = next.y;
 				prisoner.position.set(next.x, next.y, next.z);
 			} else {
 				const inPassage = prisoner.userData.currentLevel === 3 && prisoner.userData.lowerPassageOpen;
-				const nextZ = oldZ + move.z * 2.8 * dt;
+				const nextZ = oldZ + move.z * speed * dt;
 				const canEnter = inPassage && nextZ >= -4.6 && nextZ <= -2.4;
-				prisoner.position.x = THREE.MathUtils.clamp(oldX + move.x * 2.8 * dt, canEnter || inPassage && oldX < -9 ? -15.5 : -9, 9);
+				prisoner.position.x = THREE.MathUtils.clamp(oldX + move.x * speed * dt, canEnter || inPassage && oldX < -9 ? -15.5 : -9, 9);
 				prisoner.position.z = THREE.MathUtils.clamp(nextZ, prisoner.position.x < -9 ? -4.6 : -9, prisoner.position.x < -9 ? -2.4 : 9);
 			}
 			distance = Math.hypot(prisoner.position.x - oldX, prisoner.position.z - oldZ);
@@ -61,6 +62,7 @@ export function createPrisonerMovement(prisoner) {
 
 		if (distance > 0.00001) {
 			walkingDirection.copy(move).applyQuaternion(prisoner.getWorldQuaternion(inverseRotation).invert());
+			prisoner.userData.walkingDirection = walkingDirection;
 			phase += distance * 5.2;
 			gait = THREE.MathUtils.damp(gait, 1, 10, dt);
 		} else gait = THREE.MathUtils.damp(gait, 0, 9, dt);

@@ -28,12 +28,14 @@ export function createMedievalWalk(person, bones) {
 		if (!stairFeet && amount < .001) return;
 		const phase = person.userData.walkCycle ?? 0;
 		const direction = person.userData.walkingDirection ?? new THREE.Vector3(0, 0, 1);
-		const stance = .62;
+		const running = person.userData.runningToGate;
+		const stance = running ? .48 : .62;
+		const stride = running ? .46 : .375;
 		for (const { thigh, shin, foot, toes, index, rest, soleRotation } of legs) {
 			const cycle = ((phase / (Math.PI * 2) + index * .5) % 1 + 1) % 1;
 			const swing = cycle > stance ? (cycle - stance) / (1 - stance) : 0;
-			const travel = cycle <= stance ? .375 - .75 * cycle / stance : -.375 + .75 * THREE.MathUtils.smoothstep(swing, 0, 1);
-			const lift = Math.sin(Math.PI * swing) ** 2 * .14;
+			const travel = cycle <= stance ? stride * (1 - 2 * cycle / stance) : stride * (2 * THREE.MathUtils.smoothstep(swing, 0, 1) - 1);
+			const lift = Math.sin(Math.PI * swing) ** 2 * (running ? .23 : .14);
 			const target = rest.clone().addScaledVector(direction, travel * amount);
 			target.y += lift * amount;
 			person.localToWorld(target);

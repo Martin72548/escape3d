@@ -8,7 +8,12 @@ export function enablePrisonerKeyboard({prisoner,camera,renderer,canTurn=()=>tru
 	function typing(event){return event.target?.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]');}
 	window.addEventListener('keydown',event=>{
 		if(typing(event)||event.ctrlKey||event.metaKey||event.altKey||renderer.xr.isPresenting)return;
-		if(event.code==='Space'&&prisoner.userData.jumpAcrossChasm){
+		if(event.code==='Space'&&prisoner.userData.useExitRope){
+			event.preventDefault();
+			if(!event.repeat)prisoner.userData.useExitRope();
+			return;
+		}
+		if(event.code==='Space'&&(prisoner.userData.jumpInExitCorridor||prisoner.userData.jumpAcrossChasm)){
 			event.preventDefault();
 			if(!event.repeat)jumpRequested=true;
 			return;
@@ -22,18 +27,23 @@ export function enablePrisonerKeyboard({prisoner,camera,renderer,canTurn=()=>tru
 	document.addEventListener('visibilitychange',()=>{if(document.hidden)clearInput();});
 	renderer.xr.addEventListener('sessionstart',clearInput);
 	function update(dt){
-		if(prisoner.userData.wakingUp || prisoner.userData.sleeping) return;
+		const inCorridor=prisoner.userData.inExitCorridor;
+		if(prisoner.userData.wakingUp || prisoner.userData.sleeping || prisoner.userData.crossingDungeonExit&&!inCorridor) return;
 		direction.set(0,0,0);
 		if(!renderer.xr.isPresenting){
-			camera.getWorldDirection(forward);forward.y=0;if(forward.lengthSq()<.00001)forward.set(0,0,-1);forward.normalize();right.crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();
+			if(inCorridor)forward.set(-1,0,0);
+			else{camera.getWorldDirection(forward);forward.y=0;if(forward.lengthSq()<.00001)forward.set(0,0,-1);forward.normalize();}
+			right.crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();
 			if(pressed.has('KeyW'))direction.add(forward);if(pressed.has('KeyS'))direction.sub(forward);
 			if(pressed.has('KeyD'))direction.add(right);if(pressed.has('KeyA'))direction.sub(right);
 		}
 		if(jumpRequested){
 			jumpRequested=false;
-			prisoner.userData.jumpAcrossChasm?.(direction);
+			const jump=prisoner.userData.jumpInExitCorridor??prisoner.userData.jumpAcrossChasm;
+			jump?.(direction);
 		}
-		movement.update(dt,direction,canTurn());
+		if(inCorridor)prisoner.userData.runningToGate=direction.lengthSq()>0;
+		movement.update(dt,direction,inCorridor||canTurn(),inCorridor?6:undefined);
 	}
 	return {update};
 }

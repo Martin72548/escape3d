@@ -10,6 +10,8 @@ import { createStoneMaterial, addStoneCourses } from './stone-masonry.js';
 import { createMedievalFloorMaterial } from './medieval-floor-material.js';
 import { addOvalMirror } from './oval-mirror.js';
 import { addAncientKeyMarks } from './ancient-key-marks.js';
+import { showFireMessage } from './fire-message.js';
+import { translate } from './language.js';
 
 export function addSceneContent(scene) {
 	scene.background = new THREE.Color(0x191817);
@@ -54,7 +56,6 @@ export function addSceneContent(scene) {
 	masonry(20, 20, 0, 6, 0, Math.PI / 2);
 	addOvalMirror(scene);
 
- const dungeonExit = createDungeonExit(scene, stoneMaterial);
  const torches=[];
  for(const x of [-6,6])for(const z of [-9.65,9.65])torches.push(createRealisticTorch(scene,{position:[x,3,z],rotationY:z<0?0:Math.PI,intensity:32,seed:torches.length+1,interactive:true}));
 	const grid = new THREE.GridHelper(20, 20, 0x60708a, 0xaab7c8);
@@ -75,20 +76,40 @@ export function addSceneContent(scene) {
 	const slabSpell = createSlabSpell(scene, prisoner);
 	const museum = createMedievalMuseum(scene, prisoner,()=>slabSpell.addPoint());
 	installPrisonerSleep(prisoner);
+	function showRibbonMessage(hasAllRibbons) {
+		const message = hasAllRibbons
+			? translate("Tresse une corde pour atteindre l'autre bout.", 'Trenza una cuerda para llegar al otro lado.')
+			: translate("On dirait que tu n'as pas assez de rubans. Les as-tu tous pris ?", 'Parece que no tienes suficientes cintas. ¿Las has recogido todas?');
+		showFireMessage(message, { duration: 5, verticalPosition: .18, centered: true, multiline: true });
+	}
+	function showThrowHint() {
+		showFireMessage(translate('Appuie sur Espace pour lancer la corde.', 'Pulsa Espacio para lanzar la cuerda.'), { duration: 4, verticalPosition: .18, centered: true });
+	}
+	const dungeonExit = createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner, () => museum.enter(), slabSpell.addPoint, showRibbonMessage, showThrowHint);
+	let corridorHintShown = false;
 	function onSceneClick(hit) {
-		if (prisoner.userData.sleeping || prisoner.userData.wakingUp) return;
+		if (prisoner.userData.sleeping || prisoner.userData.wakingUp || prisoner.userData.crossingDungeonExit) return;
 		for(let object=hit?.mesh;object;object=object.parent)if(object.userData.returnToStart){window.location.reload();return;}
 		dungeonExit.unlockAudio();
 		if (museum.active) { museum.cast(hit); return; }
-		if (hit.target?.userData.spellTarget === 'exit-passage' && dungeonExit.opened) {
-			slabSpell.finishRayFrame?.();
-			slabSpell.applyImpacts?.();
-			slabSpell.batEncounter.stopAudio(); slabSpell.catEncounter.stopAudio(); museum.enter(); return;
-		}
 		slabSpell.cast(hit);
 	}
 	const revealKey = hideKeyUnderSlab(scene, new THREE.Vector3(3.4, 0, -1), dungeonExit.open);
 	addAncientKeyMarks(floorStones, wallStones);
-	function updateHiddenKey(dt = 0) { if (museum.active) return; torches.forEach(torch=>torch.update(dt)); revealKey(slabSpell.score, dt); dungeonExit.update(dt); }
+	function updateHiddenKey(dt = 0) {
+		if (museum.active) return;
+		torches.forEach(torch=>torch.update(dt));
+		revealKey(slabSpell.score, dt);
+		const wasCrossing = prisoner.userData.crossingDungeonExit;
+		dungeonExit.update(dt);
+		if (!corridorHintShown && prisoner.userData.inExitCorridor) {
+			corridorHintShown = true;
+			showFireMessage(translate('Appuie sur Espace pour sauter et attraper les rubans rouges.', 'Pulsa Espacio para saltar y recoger las cintas rojas.'), { duration: 5, verticalPosition: .18, centered: true });
+		}
+		if (!wasCrossing && prisoner.userData.crossingDungeonExit) {
+			slabSpell.batEncounter.stopAudio();
+			slabSpell.catEncounter.stopAudio();
+		}
+	}
 	return { floor, floorGeometry: teleportGeometry, grid, axes, movableObjects, updateHiddenKey, slabSpell, prisoner, museum, onSceneClick };
 }

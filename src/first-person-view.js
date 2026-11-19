@@ -1,3 +1,4 @@
+import { translate } from './language.js';
 import * as THREE from 'three';
 
 export function enableFirstPersonView({ camera, prisoner, renderer, orbitControls }) {
@@ -30,12 +31,14 @@ export function enableFirstPersonView({ camera, prisoner, renderer, orbitControl
 			camera.position.copy(savedPosition); orbitControls.target.copy(savedTarget);
 			orbitControls.enabled = true; orbitControls.update();
 		}
-		const label = active ? 'Revenir à la vue extérieure' : 'Première personne';
+		const label = active ? translate('Revenir à la vue extérieure', 'Volver a la vista exterior') : translate('Première personne', 'Primera persona');
 		button.setAttribute('aria-label', label);
 		button.title = label;
 		button.setAttribute('aria-pressed', String(active));
 		hint.hidden = !active;
 	}
+	button.setAttribute('aria-label', translate('Première personne', 'Primera persona'));
+	button.title = button.getAttribute('aria-label');
 	button.addEventListener('click', () => setActive(!active));
 	renderer.domElement.addEventListener('pointerdown', event => {
 		if (active && event.button === 0) drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
@@ -58,6 +61,8 @@ export function enableFirstPersonView({ camera, prisoner, renderer, orbitControl
 		prisoner.updateWorldMatrix(true, false);
 		eye.set(0, 1.68, .1); prisoner.localToWorld(eye); camera.position.copy(eye);
 		direction.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+		if (prisoner.userData.crossingDungeonExit) direction.set(Math.sin(prisoner.rotation.y), 0, Math.cos(prisoner.rotation.y));
+		if (prisoner.userData.inExitCorridor) direction.set(-1, 0, 0);
 		camera.lookAt(eye.clone().add(direction)); camera.updateMatrixWorld(true);
 	}
 	return { update, setActive, get active() { return active; } };

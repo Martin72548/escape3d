@@ -1,3 +1,4 @@
+import { movementHint, translate } from './language.js';
 import { createAdaptiveResolution } from './adaptive-resolution.js';
 import { createDungeonMusic } from './dungeon-music.js';
 import { enableFullscreen } from './desktop-fullscreen.js';
@@ -60,9 +61,11 @@ document.querySelector('#dungeon-intro-close')?.addEventListener('keydown',event
  if(event.key==='Enter'||event.key===' ')slabSpell.unlockAudio();
 });
 const firstPerson=enableFirstPersonView({camera,prisoner,renderer,orbitControls});
+const corridorCameraPosition = new THREE.Vector3();
+const corridorCameraTarget = new THREE.Vector3();
 // Keep desktop orbit and wheel zoom inside the current scene.
 orbitControls.addEventListener('change', () => {
- if (renderer.xr.isPresenting || firstPerson.active) return;
+ if (renderer.xr.isPresenting || firstPerson.active || prisoner.userData.crossingDungeonExit) return;
  const outdoors = museum.active && museum.level === 4;
  orbitControls.maxDistance = outdoors ? 24 : 14;
  camera.position.clamp(
@@ -98,12 +101,12 @@ function createMapPanel() {
 	ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
 	ctx.fillStyle = '#172033';
 	ctx.font = 'bold 32px system-ui';
-	ctx.fillText('FORMAS DE LA ESCENA', 40, 58);
+	ctx.fillText(translate('FORMES DE LA SCÈNE', 'FORMAS DE LA ESCENA'), 40, 58);
 	const shapes = [
-		{ x: 105, color: '#ff6b6b', label: 'Cubo' },
-		{ x: 235, color: '#ffc857', label: 'Cono' },
-		{ x: 365, color: '#4ecdc4', label: 'Esfera' },
-		{ x: 495, color: '#7c83fd', label: 'Toroide' },
+		{ x: 105, color: '#ff6b6b', label: translate('Cube', 'Cubo') },
+		{ x: 235, color: '#ffc857', label: translate('Cône', 'Cono') },
+		{ x: 365, color: '#4ecdc4', label: translate('Sphère', 'Esfera') },
+		{ x: 495, color: '#7c83fd', label: translate('Tore', 'Toroide') },
 	];
 	for (const [index, shape] of shapes.entries()) {
 		ctx.fillStyle = shape.color;
@@ -115,8 +118,8 @@ function createMapPanel() {
 	}
 	ctx.fillStyle = '#526079';
 	ctx.font = '22px system-ui';
-	ctx.fillText('Arrastra las figuras y explora la cuadricula', 40, 350);
-	ctx.fillText('W A S D para desplazarte', 40, 390);
+	ctx.fillText(translate('Déplace les formes et explore la grille', 'Arrastra las figuras y explora la cuadrícula'), 40, 350);
+	ctx.fillText(translate('W A S D pour te déplacer', 'W A S D para desplazarte'), 40, 390);
 	const texture = new THREE.CanvasTexture(canvas);
 	texture.colorSpace = THREE.SRGBColorSpace;
 	const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, toneMapped: false });
@@ -136,7 +139,7 @@ function initControllerLabels() {
 	if (!rightController || labelsInitPromise) return;
 	controllerLabels = new XRControllerLabelHelper({
 		handController: rightController,
-		labels: { 'a-button': 'Mapa', 'b-button': 'Guias' },
+		labels: { 'a-button': translate('Carte', 'Mapa'), 'b-button': translate('Guides', 'Guías') },
 	});
 	labelsInitPromise = controllerLabels.init().catch((error) => {
 		console.warn('No se pudieron cargar las etiquetas del control VR:', error);
@@ -180,9 +183,9 @@ controllers.addEventListener(CMEventTypes.ON_BUTTON_DOWN, (event) => {
 
 const xrButton = new XRSessionModeButton(renderer, {
 	mode: 'immersive-vr',
-	label: 'VR disponible',
-	activeLabel: 'Quitter la VR',
-	unsupportedLabel: 'VR non disponible',
+	label: translate('VR disponible', 'RV disponible'),
+	activeLabel: translate('Quitter la VR', 'Salir de la RV'),
+	unsupportedLabel: translate('VR non disponible', 'RV no disponible'),
 	optionalFeatures: ['local-floor', 'bounded-floor'],
 });
 buttonContainer.appendChild(xrButton.button);
@@ -215,17 +218,38 @@ function animate() {
 	introRendered = false;
 	updateResolution(currentTime);
 	elapsedTime += deltaTime;
-	if (!renderer.xr.isPresenting && !firstPerson.active) orbitControls.update();
+	if (!renderer.xr.isPresenting && !firstPerson.active && !prisoner.userData.crossingDungeonExit) orbitControls.update();
 	controllers.update(elapsedTime, deltaTime);
 	locomotion.update(deltaTime);
 	prisoner.userData.updateWakeSequence?.(deltaTime, camera.position);
 	prisonerKeyboard.update(deltaTime);
-	if (!museum.active) slabSpell.update(deltaTime);
+	if (!museum.active && !prisoner.userData.crossingDungeonExit) slabSpell.update(deltaTime);
+	updateHiddenKey(deltaTime);
 	museum.update(deltaTime);
+	if (prisoner.userData.crossingDungeonExit && !renderer.xr.isPresenting && !firstPerson.active) {
+		const { x, z } = prisoner.position;
+		const follow = 1 - Math.exp(-6 * deltaTime);
+		corridorCameraPosition.set(z < -8.5 ? -.65 : x * .5, 2.85, z + 4.7);
+		corridorCameraTarget.set(x, 1.85, z - .9);
+		if (prisoner.userData.inExitCorridor || x < -1 && z < -11.5) {
+			const turn = THREE.MathUtils.smoothstep(-x, 0, 4);
+			corridorCameraPosition.set(Math.min(1.1, x + 4.7), 2.85, THREE.MathUtils.lerp(-11.45, -12.35, turn));
+			corridorCameraTarget.set(x - 2.4, 1.85, THREE.MathUtils.lerp(-13, z, turn));
+		}
+		if (prisoner.userData.viewingExitVault) {
+			const lift = THREE.MathUtils.smoothstep(x - camera.position.x, -3.2, -1.9);
+			corridorCameraPosition.set(x + 2.1, THREE.MathUtils.lerp(2.85,5.1,lift), THREE.MathUtils.lerp(z+.65,z+1.85,lift));
+			corridorCameraTarget.set(x - 5, 3.35, z);
+		}
+		camera.position.lerp(corridorCameraPosition, follow);
+		orbitControls.target.lerp(corridorCameraTarget, follow);
+		camera.lookAt(orbitControls.target);
+	}
 
-	if(museum.level!==previousLevel){
+	if(museum.active && museum.level!==previousLevel){
 		previousLevel=museum.level;
-		if(previousLevel===4)document.querySelector('#first-person-hint').textContent='Arrastra para mirar · WASD para caminar · Espacio para saltar · Clic para lanzar un rayo';
+		if(previousLevel===2&&!renderer.xr.isPresenting&&!firstPerson.active){camera.position.set(3.4,3.4,9);orbitControls.target.set(0,1.6,3);orbitControls.update();}
+		if(previousLevel===4)document.querySelector('#first-person-hint').textContent=movementHint(true);
 		if(previousLevel===4&&!renderer.xr.isPresenting&&!firstPerson.active){camera.far=280;camera.updateProjectionMatrix();camera.position.set(6.6,7.8,21);orbitControls.target.set(0,1,5.6);orbitControls.update();}
 	}
 	if(prisoner.userData.victoryCelebrating&&!renderer.xr.isPresenting&&!firstPerson.active){
@@ -235,7 +259,6 @@ function animate() {
 	prisoner.userData.updateAppearance?.(deltaTime);
 	// Read the hand only after this frame's skeleton and encounter poses are applied.
 	slabSpell.updateRays();
-	updateHiddenKey(deltaTime);
 	firstPerson.update();
 	gameOverControls.update(deltaTime);
 	renderer.render(scene, camera);
