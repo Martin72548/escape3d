@@ -22,7 +22,16 @@ export function installPrisonerSleep(person) {
     startPosition = person.position.clone();
     startRotation = person.quaternion.clone();
   };
-  window.addEventListener('dungeon-introduction-complete', person.userData.wakeUp, { once: true });
+  window.addEventListener('dungeon-introduction-complete', event => {
+    if (!event.detail?.skipped) {
+      person.userData.wakeUp();
+      return;
+    }
+    person.userData.sleeping = false;
+    person.userData.wakingUp = false;
+    person.position.copy(destination);
+    person.quaternion.copy(upright);
+  }, { once: true });
   person.userData.updateWakeSequence = (dt, cameraPosition) => {
     if (!person.userData.wakingUp) return;
     elapsed += dt;

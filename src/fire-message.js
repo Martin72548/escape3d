@@ -71,12 +71,20 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
   smoke.fillStyle = density;
   smoke.fillRect(0, 0, 64, 64);
   const start = performance.now();
+  let frame;
+  let finished = false;
+  function finish() {
+    if (finished) return;
+    finished = true;
+    cancelAnimationFrame(frame);
+    removeEventListener('resize', resize);
+    canvas.remove();
+    onComplete?.();
+  }
   function draw(now) {
     const time = (now - start) / 1000;
     if (time >= duration + 3) {
-      removeEventListener('resize', resize);
-      canvas.remove();
-      onComplete?.();
+      finish();
       return;
     }
     const extinguish = Math.max(0, Math.min(1, (time - duration) / 3));
@@ -112,7 +120,8 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
       }
     }
     ctx.restore();
-    requestAnimationFrame(draw);
+    frame = requestAnimationFrame(draw);
   }
-  requestAnimationFrame(draw);
+  frame = requestAnimationFrame(draw);
+  return finish;
 }

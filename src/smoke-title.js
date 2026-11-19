@@ -82,8 +82,21 @@ function draw(now) {
   if (time >= 8.5) {
     removeEventListener('resize', resize);
     canvas.remove();
-    showFireMessage(introduction, { duration: 15, verticalPosition: .5, centered: true, multiline: true,
-      onComplete: () => window.dispatchEvent(new Event('dungeon-introduction-complete')) });
+    const skipButton = document.createElement('button');
+    skipButton.type = 'button';
+    skipButton.className = 'skip-presentation';
+    skipButton.textContent = translate('Sauter la présentation', 'Saltar la presentación');
+    let skipped = false;
+    const finish = showFireMessage(introduction, { duration: 15, verticalPosition: .5, centered: true, multiline: true,
+      onComplete: () => {
+        skipButton.remove();
+        window.dispatchEvent(new CustomEvent('dungeon-introduction-complete', { detail: { skipped } }));
+      } });
+    skipButton.addEventListener('click', () => {
+      skipped = true;
+      finish();
+    }, { once: true });
+    document.body.appendChild(skipButton);
     return;
   }
   context.clearRect(0, 0, width, height);
