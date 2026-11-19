@@ -15,7 +15,7 @@ export function createPrisonerMovement(prisoner) {
 	prisoner.userData.walkingDirection = walkingDirection;
 	let phase = 0;
 	let gait = 0;
-	const baseY = prisoner.position.y;
+	const baseY = prisoner.userData.standingY ?? prisoner.position.y;
 
 	function update(dt, direction, turn = true) {
 		if (prisoner.userData.wakingUp && !prisoner.userData.introWalking) return;

@@ -5,6 +5,8 @@ const WALK_START = 10.7;
 const ease = (time, start, end) => THREE.MathUtils.smoothstep(time, start, end);
 
 export function installPrisonerSleep(person) {
+  const standingY = person.position.y;
+  person.userData.standingY = standingY;
   person.userData.sleeping = true;
   person.position.set(8.2, .58, -9.2);
   // Face into the room (+Z), with the back toward the rear wall (-Z).
@@ -12,7 +14,7 @@ export function installPrisonerSleep(person) {
   let elapsed = 0, startPosition, startRotation, walking, riseYaw = null;
   const seated = new THREE.Vector3(7.1, -1.15, -8.8);
   const upright = new THREE.Quaternion();
-  const destination = new THREE.Vector3(-1.5, .02, -1);
+  const destination = new THREE.Vector3(-1.5, standingY, -1);
   person.userData.wakeUp = () => {
     if (!person.userData.sleeping) return;
     person.userData.sleeping = false;
@@ -48,7 +50,7 @@ export function installPrisonerSleep(person) {
       person.position.z += Math.cos(riseYaw ?? 0) * forwardShift;
       person.rotation.set(.27 * gather * (1 - settle), riseYaw ?? 0, -.07 * gather * (1 - push), 'YXZ');
     } else {
-      if (!walking) { person.position.y = .02; person.rotation.set(0, riseYaw ?? 0, 0); walking = createPrisonerMovement(person); }
+      if (!walking) { person.position.y = standingY; person.rotation.set(0, riseYaw ?? 0, 0); walking = createPrisonerMovement(person); }
       person.userData.introWalking = true;
       const direction = destination.clone().sub(person.position).setY(0);
       const distance = direction.length();
