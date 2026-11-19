@@ -173,3 +173,17 @@ html:fullscreen #scoreboard { top: 18px; }
 @media (max-width: 720px) { #scoreboard { top: 150px; right: 12px; padding: 10px 14px; } }
 
 .smoke-title { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 15; pointer-events: none; }
+.skip-presentation {
+  position: fixed;
+  z-index: 16;
+  padding: 8px 0 8px 10px;
+  border: 0;
+  background: transparent;
+  color: #ffc25d;
+  font: 600 clamp(1rem, 2.2vw, 1.25rem)/1.2 Georgia, serif;
+  text-shadow: 0 0 4px #ff651c, 0 0 12px #ff5e12, 0 1px 3px #240d04;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.skip-presentation:hover { color: #fff2b5; }
+.skip-presentation:focus-visible { outline: 2px solid #ffc25d; outline-offset: 3px; }

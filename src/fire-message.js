@@ -1,9 +1,10 @@
-export function showFireMessage(message, { duration = 6, verticalPosition = .34, centered = false, multiline = false, onComplete } = {}) {
+export function showFireMessage(message, { duration = 6, verticalPosition = .34, centered = false, multiline = false, action, onComplete } = {}) {
   const canvas = document.createElement('canvas');
   canvas.className = 'smoke-title';
   canvas.setAttribute('role', 'img');
   canvas.setAttribute('aria-label', message);
   document.body.appendChild(canvas);
+  if (action) document.body.appendChild(action);
   const ctx = canvas.getContext('2d');
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let width, height, mask, sparks;
@@ -19,6 +20,11 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
     let size = Math.max(16, Math.min(27, mask.width / 17));
     let lineHeight;
     const ink = mask.getContext('2d');
+    const centerX = width * (centered ? .5 : width < 600 ? .41 : .23);
+    const centerY = height * verticalPosition;
+    const maxTextHeight = action
+      ? Math.min(height * .78, 2 * (height - centerY - action.offsetHeight - 12))
+      : height * .78;
     let lines;
     do {
       lineHeight = size * 1.5;
@@ -35,7 +41,7 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
         }
         lines.push(line);
       }
-      if (!multiline || lines.length * lineHeight + 12 <= height * .78 || size <= 10) break;
+      if (!multiline || lines.length * lineHeight + 12 <= maxTextHeight || size <= 10) break;
       size -= 1;
     } while (true);
     mask.height = Math.ceil(lines.length * lineHeight + 12);
@@ -48,6 +54,11 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
     fire.addColorStop(1, '#ff651c');
     ink.fillStyle = fire;
     lines.forEach((text, i) => ink.fillText(text, mask.width / 2, 6 + (i + .5) * lineHeight));
+    if (action) {
+      const textWidth = Math.max(...lines.map(line => ink.measureText(line).width));
+      action.style.right = `${Math.max(8, width - centerX - textWidth / 2)}px`;
+      action.style.top = `${Math.min(centerY + mask.height / 2 + 4, height - action.offsetHeight - 8)}px`;
+    }
     const pixels = ink.getImageData(0, 0, mask.width, mask.height).data;
     sparks = [];
     for (let y = 0; y < mask.height; y += 3) {
@@ -79,6 +90,7 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
     cancelAnimationFrame(frame);
     removeEventListener('resize', resize);
     canvas.remove();
+    action?.remove();
     onComplete?.();
   }
   function draw(now) {

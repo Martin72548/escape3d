@@ -85,18 +85,16 @@ function draw(now) {
     const skipButton = document.createElement('button');
     skipButton.type = 'button';
     skipButton.className = 'skip-presentation';
-    skipButton.textContent = translate('Sauter la présentation', 'Saltar la presentación');
+    skipButton.textContent = translate('Sauter l’intro', 'Saltar la intro');
     let skipped = false;
-    const finish = showFireMessage(introduction, { duration: 15, verticalPosition: .5, centered: true, multiline: true,
+    const finish = showFireMessage(introduction, { duration: 15, verticalPosition: .5, centered: true, multiline: true, action: skipButton,
       onComplete: () => {
-        skipButton.remove();
         window.dispatchEvent(new CustomEvent('dungeon-introduction-complete', { detail: { skipped } }));
       } });
     skipButton.addEventListener('click', () => {
       skipped = true;
       finish();
     }, { once: true });
-    document.body.appendChild(skipButton);
     return;
   }
   context.clearRect(0, 0, width, height);
