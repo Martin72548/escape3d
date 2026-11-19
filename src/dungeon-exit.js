@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createRecordedDoorCreak } from './recorded-door-creak.js';
 import { createPrisonerMovement } from './prisoner-movement.js';
 import { createRealisticTorch } from './realistic-torch.js';
+import { addChapelDoor } from './chapel-door.js';
 
 export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner, enterNextRoom, awardRibbonPoint, showRibbonMessage, showThrowHint) {
  const iron=new THREE.MeshStandardMaterial({color:0x292a28,metalness:.7,roughness:.65});
@@ -90,18 +91,13 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
 
  const chapelHinge=new THREE.Group();chapelHinge.name='Porte de la chapelle du Saut Périlleux';
  chapelHinge.position.set(-1.15,0,chapelZ);corridor.add(chapelHinge);
- const doorShape=new THREE.Shape();
- doorShape.moveTo(0,0);doorShape.lineTo(2.3,0);doorShape.lineTo(2.3,2.65);
- doorShape.absarc(1.15,2.65,1.15,0,Math.PI,false);doorShape.lineTo(0,0);
- const chapelDoor=new THREE.Mesh(new THREE.ExtrudeGeometry(doorShape,{depth:.16,bevelEnabled:false}),wood);
- chapelDoor.castShadow=true;chapelHinge.add(chapelDoor);
+ addChapelDoor(chapelHinge,iron);
  const chapelWall=new THREE.Shape();
  chapelWall.moveTo(-2.8,0);chapelWall.lineTo(-2.8,vaultHeight);chapelWall.lineTo(2.8,vaultHeight);chapelWall.lineTo(2.8,0);
  chapelWall.lineTo(1.16,0);chapelWall.lineTo(1.16,2.65);
  chapelWall.absarc(0,2.65,1.16,0,Math.PI,false);chapelWall.lineTo(-1.16,0);chapelWall.closePath();
  const facade=new THREE.Mesh(new THREE.ExtrudeGeometry(chapelWall,{depth:.28,bevelEnabled:false}),stoneMaterial);
  facade.position.z=chapelZ-.19;facade.castShadow=facade.receiveShadow=true;corridor.add(facade);
- for(const y of [.75,1.65,2.55])chapelHinge.attach(block(2.25,.11,.09,0,y,chapelZ+.19,iron));
  for(const x of [-1.34,1.34])block(.36,2.7,.65,x,1.35,chapelZ);
  for(let i=0;i<9;i++){
   const angle=(i+.5)*Math.PI/9;
