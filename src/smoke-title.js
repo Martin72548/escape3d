@@ -1,11 +1,11 @@
 import { translate } from './language.js';
 import { showFireMessage } from './fire-message.js';
 
-const introduction = translate(`Aide le magicien prisonnier à échapper de ce sombre cachot.
+const introduction = translate(`Aide le magicien à s’échapper.
 
-La clé qui ouvre la porte est cachée sous une dalle ou une brique. Détruis tout ce qui peut mettre sa vie en danger, ouvre la porte et passe au niveau suivant.
+La clé qui ouvre la porte est cachée sous une dalle ou une brique de ce sombre cachot. Les bêtes et les monstres sont dangereux, mais tu as ta magie pour les détruire. Ouvre la porte et passe au niveau suivant.
 
-Pour te déplacer dans le cachot, utilise les touches W, A, S et D.
+Pour te déplacer, utilise les touches W, A, S et D.
 
 Que la chance t’accompagne !`, `Ayuda al mago prisionero a escapar de este oscuro calabozo.
 
