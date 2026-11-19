@@ -150,6 +150,15 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
  const rope=new THREE.Group();
  rope.name='Corde de traversée';
  rope.visible=false;corridor.add(rope);
+ const heldRibbon=new THREE.Group();
+ heldRibbon.name='Ruban rouge serré dans la main droite';
+ heldRibbon.visible=false;corridor.add(heldRibbon);
+ const knot=new THREE.Mesh(new THREE.SphereGeometry(.082,10,8),ribbonMaterial);
+ knot.scale.set(1,.7,.8);heldRibbon.add(knot);
+ for(const side of [-1,1]){
+  const tail=new THREE.Mesh(ribbonGeometry,ribbonMaterial);
+  tail.scale.set(.7,.55,.7);tail.rotation.z=side*.32;tail.position.x=side*.034;heldRibbon.add(tail);
+ }
  const ropeMaterial=new THREE.MeshStandardMaterial({color:0x9b352b,roughness:.91});
  const ropeGeometry=new THREE.CylinderGeometry(.045,.045,1,8);
  const ropeSegments=Array.from({length:14},()=>{
@@ -232,6 +241,18 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
    start.copy(end);
   });
   rope.visible=true;
+ }
+ function updateGrip(){
+  heldRibbon.visible=stage==='takeoff'||stage==='swing';
+  if(!heldRibbon.visible)return;
+  const palm=prisoner.getObjectByName('spell-origin');
+  if(palm)palm.getWorldPosition(grip);
+  else wrist.localToWorld(grip.set(0,-.055,0));
+  corridor.worldToLocal(grip);
+  heldRibbon.position.copy(grip);
+  heldRibbon.rotation.y=Math.sin(vaultAge*6)*.25;
+  ropeTip.copy(ropeAnchor);
+  drawRope(0);
  }
  function throwRope(){
   if(stage!=='holdRope')return;
@@ -383,7 +404,6 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
    vaultAge+=dt;
    prisoner.position.y=standingY+1.12*THREE.MathUtils.smoothstep(vaultAge,0,.32);
    poseHands(-2.58,-2.45,.12,-.12);
-   ropeTip.copy(ropeAnchor);drawRope(0);
    if(vaultAge>=.32){vaultAge=0;stage='swing';}
   }else if(stage==='swing'){
    vaultAge=Math.min(vaultAge+dt,2.2);
@@ -392,7 +412,6 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
    prisoner.position.y+=1.12*THREE.MathUtils.smoothstep(Math.abs(prisoner.position.x-pivot.x),2.4,3.8);
    prisoner.rotation.y=-Math.PI/2;
    poseHands(-2.58,-2.45,.12,-.12);
-   ropeTip.copy(ropeAnchor);drawRope(0);
    if(vaultAge>=2.2){rope.visible=false;coil.visible=true;coil.position.copy(grip);vaultAge=0;stage='openChapel';}
   }else if(stage==='openChapel'){
    movement.update(dt,direction.set(0,0,0));
@@ -414,5 +433,5 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
    enterNextRoom();
   }
  }
- return {open,update,unlockAudio:creak.unlock};
+ return {open,update,updateGrip,unlockAudio:creak.unlock};
 }

@@ -111,5 +111,5 @@ export function addSceneContent(scene) {
 			slabSpell.catEncounter.stopAudio();
 		}
 	}
-	return { floor, floorGeometry: teleportGeometry, grid, axes, movableObjects, updateHiddenKey, slabSpell, prisoner, museum, onSceneClick };
+	return { floor, floorGeometry: teleportGeometry, grid, axes, movableObjects, updateHiddenKey, updateExitGrip: dungeonExit.updateGrip, slabSpell, prisoner, museum, onSceneClick };
 }

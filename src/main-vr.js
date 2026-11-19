@@ -44,7 +44,7 @@ orbitControls.maxDistance = 14;
 orbitControls.zoomSpeed = 0.6;
 orbitControls.maxPolarAngle = Math.PI * 0.49;
 
-const { floorGeometry, grid, axes, updateHiddenKey, slabSpell, prisoner, museum, onSceneClick } = addSceneContent(scene);
+const { floorGeometry, grid, axes, updateHiddenKey, updateExitGrip, slabSpell, prisoner, museum, onSceneClick } = addSceneContent(scene);
 const dungeonMusic = createDungeonMusic();
 function startDungeonMusic(event) {
  if (museum.active || prisoner.userData.dead) return;
@@ -257,6 +257,7 @@ function animate() {
 		if(victoryCameraAge<2.5){victoryCameraAge=Math.min(2.5,victoryCameraAge+deltaTime);const t=THREE.MathUtils.smoothstep(victoryCameraAge,0,2.5);camera.position.lerpVectors(victoryCameraFrom,new THREE.Vector3(0,10,10),t);orbitControls.target.lerpVectors(victoryTargetFrom,new THREE.Vector3(0,2,-14.5),t);orbitControls.update();}
 	}
 	prisoner.userData.updateAppearance?.(deltaTime);
+	updateExitGrip();
 	// Read the hand only after this frame's skeleton and encounter poses are applied.
 	slabSpell.updateRays();
 	firstPerson.update();
