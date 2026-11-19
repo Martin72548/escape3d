@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 
-// A single shared, weathered stencil for all seventy stones.
+// Both colors share the same weathered stencil.
 function keyTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 256;
   const ctx = canvas.getContext('2d');
-  ctx.strokeStyle = '#000000';
+  ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 12;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -34,16 +34,18 @@ function keyTexture() {
 
 export function addAncientKeyMarks(floorStones, wallStones) {
   const material = new THREE.MeshStandardMaterial({
-    map: keyTexture(), transparent: true, depthWrite: false,
+    color: 0x000000, map: keyTexture(), transparent: true, depthWrite: false,
     roughness: 1, metalness: 0, polygonOffset: true,
     polygonOffsetFactor: -2, polygonOffsetUnits: -2,
   });
+  const whiteMaterial = material.clone();
+  whiteMaterial.color.setHex(0xffffff);
   const geometry = new THREE.PlaneGeometry(1, 1);
   const matrix = new THREE.Matrix4();
   const position = new THREE.Vector3();
   const rotation = new THREE.Quaternion();
   const scale = new THREE.Vector3();
-  function candidates(stonesList) {
+  function distributeMarks(stonesList, whiteCount) {
     const result = [];
     for (const stones of stonesList) {
       for (let id = 0; id < stones.count; id++) {
@@ -70,10 +72,17 @@ export function addAncientKeyMarks(floorStones, wallStones) {
         else selected.push(required);
       }
     }
-    return selected;
+    const extra = result.filter(({ stones, id }) =>
+      !selected.some(item => item.stones === stones && item.id === id)
+    ).slice(0, whiteCount);
+    return [
+      ...selected.map(item => ({ ...item, material })),
+      ...extra.map(item => ({ ...item, material: whiteMaterial })),
+    ];
   }
-  for (const { stones, id } of [...candidates([floorStones]), ...candidates(wallStones)]) {
-    const mark = new THREE.Mesh(geometry, material);
+  const marks = [...distributeMarks([floorStones], 8), ...distributeMarks(wallStones, 7)];
+  for (const { stones, id, material: markMaterial } of marks) {
+    const mark = new THREE.Mesh(geometry, markMaterial);
     mark.name = 'ancient-key-mark';
     mark.userData.stoneInstance = id;
     mark.raycast = () => {};
