@@ -185,6 +185,10 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
    shots.length=0;pending=null;prisoner.userData.currentLevel=3;lowerChamber=buildLowerChamber(scene,prisoner,()=>{
     shots.length=0;pending=null;lowerChamber.root.visible=false;chasm=buildChasmScene(scene,prisoner,()=>onPointEarned());
    },()=>onPointEarned());
+   showFireMessage(translate(
+    "Cage de la louve.\nN'ouvre pas la cage si tu ne veux pas être mangé.",
+    'Jaula de la loba.\nNo abras la jaula si no quieres que te devore.',
+   ), { duration: 6, verticalPosition: .18, multiline: true, centered: true });
   });
   const lucia=pedestal(6,-4,'Santa Lucia azul con halo',0x648dcc);robe(lucia.figure,lucia.material);face(lucia.figure,lucia.material);
   addFallbackLuciaHair(lucia.figure);
