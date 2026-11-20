@@ -190,5 +190,5 @@ export function createEffigyEncounter(scene, tomb, prisoner) {
     }
     eyes.forEach(({eye,light})=>{eye.visible=hits<3;light.intensity=(2+Math.sin(age*19)*.4)*sit;});
   }
-  return {trigger,hit,update,unlockAudio:scream.unlock,get hits(){return hits;}};
+  return {trigger,hit,update,unlockAudio:scream.unlock,get hits(){return hits;},get defeated(){return hits>=3;}};
 }

@@ -1,9 +1,11 @@
 import * as THREE from 'three';
 import { createPrisonerMovement } from './prisoner-movement.js';
+import { createRunningFootsteps } from './running-footsteps.js';
 
 export function enablePrisonerKeyboard({prisoner,camera,renderer,canTurn=()=>true}) {
 	const pressed=new Set(),forward=new THREE.Vector3(),right=new THREE.Vector3(),direction=new THREE.Vector3();
 	const movement=createPrisonerMovement(prisoner),keys=['KeyW','KeyA','KeyS','KeyD'];
+	const playFootstep = createRunningFootsteps();
 	let jumpRequested=false;
 	function typing(event){return event.target?.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]');}
 	window.addEventListener('keydown',event=>{
@@ -43,7 +45,12 @@ export function enablePrisonerKeyboard({prisoner,camera,renderer,canTurn=()=>tru
 			jump?.(direction);
 		}
 		if(inCorridor)prisoner.userData.runningToGate=direction.lengthSq()>0;
+		const previousStep = Math.floor((prisoner.userData.walkCycle ?? 0) / Math.PI);
 		movement.update(dt,direction,inCorridor||canTurn(),inCorridor?6:undefined);
+		const currentStep = Math.floor((prisoner.userData.walkCycle ?? 0) / Math.PI);
+		if (inCorridor && prisoner.userData.runningToGate && !prisoner.userData.jumpingInExitCorridor && currentStep > previousStep) {
+			playFootstep();
+		}
 	}
 	return {update};
 }

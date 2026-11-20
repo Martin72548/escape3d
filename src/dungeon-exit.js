@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { createRecordedDoorCreak } from './recorded-door-creak.js';
+import { createRopeMusic } from './rope-music.js';
+import { createTwistedRope } from './twisted-rope.js';
 import { createPrisonerMovement } from './prisoner-movement.js';
 import { createRealisticTorch } from './realistic-torch.js';
 import { addChapelDoor } from './chapel-door.js';
@@ -143,7 +145,8 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
  const gripHeight=3.45;
  const swingAngle=Math.atan2(nearX-pivot.x,pivot.y-standingY-gripHeight);
  const swingRadius=Math.hypot(nearX-pivot.x,pivot.y-standingY-gripHeight);
- const rope=new THREE.Group();
+ const thrownRope=createTwistedRope(256,.052,.14);
+ const rope=thrownRope.root;
  rope.name='Corde de traversée';
  rope.visible=false;corridor.add(rope);
  const heldRibbon=new THREE.Group();
@@ -155,15 +158,18 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
   const tail=new THREE.Mesh(ribbonGeometry,ribbonMaterial);
   tail.scale.set(.7,.55,.7);tail.rotation.z=side*.32;tail.position.x=side*.034;heldRibbon.add(tail);
  }
- const ropeMaterial=new THREE.MeshStandardMaterial({color:0x9b352b,roughness:.91});
- const ropeGeometry=new THREE.CylinderGeometry(.045,.045,1,8);
- const ropeSegments=Array.from({length:14},()=>{
-  const segment=new THREE.Mesh(ropeGeometry,ropeMaterial);rope.add(segment);return segment;
- });
  const coil=new THREE.Group();coil.name='Corde tressée tenue en main';coil.visible=false;corridor.add(coil);
+ const loopRadius=.29, loopStretch=1.25;
  for(let i=0;i<4;i++){
-  const loop=new THREE.Mesh(new THREE.TorusGeometry(.29,.042,6,32),ropeMaterial);
-  loop.position.set(.045*i,-.27,.015*i);loop.rotation.y=1.1+i*.09;loop.scale.y=1.25;coil.add(loop);
+  const twistedLoop=createTwistedRope(120,.046);
+  twistedLoop.update((t,center,normal,binormal)=>{
+   const angle=t*Math.PI*2;
+   normal.set(Math.cos(angle),Math.sin(angle),0);
+   binormal.set(0,0,-1);
+   center.copy(normal).multiplyScalar(loopRadius);
+  },true);
+  const loop=twistedLoop.root;
+  loop.position.set(.045*i,-loopRadius*loopStretch,.015*i);loop.rotation.y=1.1+i*.09;loop.scale.y=loopStretch;coil.add(loop);
  }
  const gold=new THREE.Group();gold.visible=false;corridor.add(gold);
  const glow=new THREE.PointLight(0xffc441,0,4,2);gold.add(glow);
@@ -173,8 +179,16 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
  const braidStrips=Array.from({length:10},()=>{const strip=new THREE.Mesh(ribbonGeometry,ribbonMaterial);gold.add(strip);return strip;});
  const ropeAnchor=corridor.worldToLocal(pivot.clone());
  const grip=new THREE.Vector3(), otherHand=new THREE.Vector3(), ropeTip=new THREE.Vector3();
- const start=new THREE.Vector3(), end=new THREE.Vector3(), ropeDirection=new THREE.Vector3(), up=new THREE.Vector3(0,1,0);
+ const ropeDirection=new THREE.Vector3(), ropeTangent=new THREE.Vector3();
+ const up=new THREE.Vector3(0,1,0), forward=new THREE.Vector3(0,0,1);
  const creak=createRecordedDoorCreak({volume:1.4}),openingAngle=Math.PI*.56;
+ const ropeMusic = createRopeMusic();
+ const gateLiftStart = .75, gateLiftEnd = 2.3;
+ const gateCreak = createRecordedDoorCreak({
+  filename: 'corridor-gate-recording.mp3',
+  volume: 1,
+  excerptDuration: gateLiftEnd - gateLiftStart,
+ });
  const movement=createPrisonerMovement(prisoner,{scripted:true});
  const arm=prisoner.getObjectByName('casting-arm');
  const leftArm=prisoner.getObjectByName('left-arm');
@@ -189,7 +203,11 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
  let gateOpened=false,edgeCheckArmed=true;
  let throwAttempts=0;
  const jumpDuration=.76;
- function jump(){if(stage==='run'&&jumpTime===null)jumpTime=0;}
+ function jump(){
+  if(stage!=='run'||jumpTime!==null)return;
+  jumpTime=0;
+  prisoner.userData.jumpingInExitCorridor=true;
+ }
  function giveCorridorControl(){
   const state=prisoner.userData;
   state.inExitCorridor=true;
@@ -211,40 +229,45 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
    delete state.jumpInExitCorridor;
    prisoner.rotation.y=-Math.PI/2;
    stage='braid';
+   ropeMusic.play();
   }else{
    edgeCheckArmed=false;
    giveCorridorControl();
   }
+ }
+ function readRightGrip(){
+  const palm=prisoner.getObjectByName('spell-origin');
+  if(palm)palm.getWorldPosition(grip);
+  else wrist.localToWorld(grip.set(0,-.055,0));
+  corridor.worldToLocal(grip);
  }
  function poseHands(rightPitch,leftPitch,closer,bend){
   arm.quaternion.copy(rightRest);arm.rotateX(rightPitch);arm.rotateZ(closer);
   leftArm.quaternion.copy(leftRest);leftArm.rotateX(leftPitch);leftArm.rotateZ(-closer);
   elbow.quaternion.copy(elbowRest);elbow.rotateX(bend);
   leftElbow.quaternion.copy(leftElbowRest);leftElbow.rotateX(bend);
-  wrist.getWorldPosition(grip);corridor.worldToLocal(grip);
+  readRightGrip();
   leftWrist.getWorldPosition(otherHand);corridor.worldToLocal(otherHand);
  }
  function drawRope(slack){
-  start.copy(grip);
-  ropeSegments.forEach((segment,index)=>{
-   const t=(index+1)/ropeSegments.length;
-   end.copy(grip).lerp(ropeTip,t);
-   end.y+=slack*Math.sin(Math.PI*t);
-   ropeDirection.copy(end).sub(start);
-   segment.position.copy(start).lerp(end,.5);
-   segment.scale.y=ropeDirection.length()+.025;
-   segment.quaternion.setFromUnitVectors(up,ropeDirection.normalize());
-   start.copy(end);
-  });
+  ropeDirection.subVectors(ropeTip,grip);
+  if(ropeDirection.lengthSq()<.000001){rope.visible=false;return;}
+  const reference=Math.abs(ropeDirection.y)/ropeDirection.length()>.9?forward:up;
+  thrownRope.update((t,center,normal,binormal)=>{
+   center.copy(grip).lerp(ropeTip,t);
+   center.y+=slack*Math.sin(Math.PI*t);
+   ropeTangent.copy(ropeDirection);
+   ropeTangent.y+=slack*Math.PI*Math.cos(Math.PI*t);
+   ropeTangent.normalize();
+   normal.crossVectors(reference,ropeTangent).normalize();
+   binormal.crossVectors(ropeTangent,normal);
+  },false,stage==='throwRope'&&throwAttempts<3);
   rope.visible=true;
  }
  function updateGrip(){
   heldRibbon.visible=stage==='takeoff'||stage==='swing';
   if(!heldRibbon.visible)return;
-  const palm=prisoner.getObjectByName('spell-origin');
-  if(palm)palm.getWorldPosition(grip);
-  else wrist.localToWorld(grip.set(0,-.055,0));
-  corridor.worldToLocal(grip);
+  readRightGrip();
   heldRibbon.position.copy(grip);
   heldRibbon.rotation.y=Math.sin(vaultAge*6)*.25;
   ropeTip.copy(ropeAnchor);
@@ -303,7 +326,10 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
       awardRibbonPoint();
      }
     }
-    if(t===1)jumpTime=null;
+    if(t===1){
+     jumpTime=null;
+     prisoner.userData.jumpingInExitCorridor=false;
+    }
    }
    if(gateOpened){
     state.viewingExitVault=prisoner.position.x<gateX-2.4;
@@ -326,6 +352,7 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
     stage='lever';
    }
   }else if(stage==='lever'){
+   const previousLeverAge = leverAge;
    leverAge+=dt;
    movement.update(dt,direction.set(0,0,0));
    const reach=THREE.MathUtils.smoothstep(leverAge,0,.45);
@@ -334,8 +361,11 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
    arm.rotateX((-1.35+.85*pull)*reach*(1-release));
    arm.rotateZ(-.55*reach*(1-release));
    lever.rotation.x=1.7*pull;
-   gate.position.y=3.75*THREE.MathUtils.smoothstep(leverAge,.75,2.3);
-   if(leverAge>=2.3){gateOpened=true;stage='through';}
+   if (previousLeverAge < gateLiftStart && leverAge >= gateLiftStart) {
+    gateCreak.play();
+   }
+   gate.position.y=3.75*THREE.MathUtils.smoothstep(leverAge,gateLiftStart,gateLiftEnd);
+   if(leverAge>=gateLiftEnd){gateOpened=true;stage='through';}
   }else if(stage==='through'){
    if(moveTo(nearX,junctionZ,dt,2.8)){
     state.viewingExitVault=true;
@@ -429,5 +459,5 @@ export function createDungeonExit(scene, stoneMaterial, floorMaterial, prisoner,
    enterNextRoom();
   }
  }
- return {open,update,updateGrip,unlockAudio:creak.unlock};
+ return {open,update,updateGrip,unlockAudio(){creak.unlock();gateCreak.unlock();ropeMusic.unlock();}};
 }

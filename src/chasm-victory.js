@@ -1,3 +1,4 @@
+import { translate } from './language.js';
 import { createCurtainCall } from './curtain-call.js';
 import * as THREE from 'three';
 import { createRetroVictoryMusic } from './retro-victory-music.js';
@@ -13,7 +14,7 @@ export function createChasmVictory(parent,prisoner,{compact=false,horizontalScal
  const pieces=Array.from({length:850},(_,i)=>{confetti.setColorAt(i,new THREE.Color(colors[i%colors.length]));return {x:(random()-.5)*(compact?18*horizontalScale:23),y:5+random()*(compact?9:17),z:(compact?-7*horizontalScale:-26)+(random()-.5)*(compact?5*horizontalScale:15),fall:2.3+random()*3,size:.09+random()*.17,phase:random()*6.28,spin:1+random()*5};});
  const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=320;const ctx=canvas.getContext('2d');
  ctx.fillStyle='#111936';ctx.fillRect(0,0,1024,320);ctx.strokeStyle='#ffe275';ctx.lineWidth=12;ctx.strokeRect(12,12,1000,296);ctx.strokeStyle='#73e6e0';ctx.lineWidth=3;ctx.strokeRect(30,30,964,260);
- ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 160px monospace';ctx.fillStyle='#0a0e21';ctx.fillText('Ganaste',520,174);ctx.fillStyle='#ffe275';ctx.fillText('Ganaste',512,162);
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 160px monospace';ctx.fillStyle='#0a0e21';ctx.fillText(translate('Victoire !', '¡Ganaste!'),520,174);ctx.fillStyle='#ffe275';ctx.fillText(translate('Victoire !', '¡Ganaste!'),512,162);
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
  const banner=new THREE.Mesh(new THREE.PlaneGeometry(6.4,2),new THREE.MeshBasicMaterial({map,side:THREE.DoubleSide,fog:false}));banner.name='Cartel Ganaste';banner.position.set(0,compact?6:8.5,compact?-8*horizontalScale:-27);banner.visible=false;banner.raycast=()=>{};root.add(banner);
  const arms=[prisoner.getObjectByName('casting-arm'),prisoner.getObjectByName('left-arm')],elbows=[prisoner.getObjectByName('casting-elbow'),prisoner.getObjectByName('left-elbow')];
@@ -39,7 +40,7 @@ export function createChasmVictory(parent,prisoner,{compact=false,horizontalScal
    p.y-=dt*p.fall;if(p.y<.4&&age<11)p.y=15+random()*6;
    dummy.position.set(p.x+Math.sin(age*1.3+p.phase)*1.4,p.y,p.z+Math.cos(age+p.phase)*.5);dummy.rotation.set(age*p.spin+p.phase,age*.8+p.phase,age*p.spin*.7);dummy.scale.set(p.size,p.size*.65,p.y<.3?0:1);if(p.y<.3)dummy.scale.setScalar(0);dummy.updateMatrix();confetti.setMatrixAt(i,dummy.matrix);
   });confetti.instanceMatrix.needsUpdate=true;
-  if(age>=4.1&&!announced){announced=true;banner.visible=true;status.textContent='Ganaste. Lanza un rayo a cada una de las diez piedras para convocar a los personajes.';music.play();}
+  if(age>=4.1&&!announced){announced=true;banner.visible=true;status.textContent=translate('Victoire ! Lance un rayon sur chacune des dix pierres pour faire apparaître les personnages.', 'Ganaste. Lanza un rayo a cada una de las diez piedras para convocar a los personajes.');music.play();}
  }
  return {root,rainbow,confetti,banner,music,curtain,start,update,get active(){return active;},get age(){return age;},get completed(){return announced;}};
 }

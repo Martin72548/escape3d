@@ -1,3 +1,4 @@
+import { translate } from './language.js';
 import { refineFinalHarpy } from './harpy-realistic-face.js';
 import * as THREE from 'three';
 import { createToad } from './cat-encounter.js';
@@ -103,11 +104,11 @@ export function createCurtainCall(parent,prisoner){
    cueContext.fillStyle=gradient;cueContext.beginPath();cueContext.roundRect(5,5,1110,150,24);cueContext.fill();
    cueContext.strokeStyle='#ffe9a4';cueContext.lineWidth=5;cueContext.stroke();
    cueContext.fillStyle='#ffe9a4';cueContext.font='bold 64px Georgia';cueContext.textAlign='center';cueContext.textBaseline='middle';
-   cueContext.fillText('Volver al comienzo',560,80,1040);cueMap.needsUpdate=true;
+   cueContext.fillText(translate('Revenir au début', 'Volver al comienzo'),560,80,1040);cueMap.needsUpdate=true;
    return;
   }
   cueContext.clearRect(0,0,1536,160);cueContext.fillStyle='rgba(12,20,30,.88)';cueContext.fillRect(0,0,1536,160);cueContext.fillStyle='#ffe9a4';cueContext.font='bold 60px Georgia';cueContext.textAlign='center';cueContext.textBaseline='middle';
-  cueContext.fillText(`Lanza un rayo a cada piedra ? ${count} / 10`,768,80,1460);cueMap.needsUpdate=true;
+  cueContext.fillText(translate(`Lance un rayon sur chaque pierre · ${count} / 10`, `Lanza un rayo a cada piedra · ${count} / 10`),768,80,1460);cueMap.needsUpdate=true;
  }
  updateCue();
  const light=new THREE.DirectionalLight(0xffe8c9,2.2);light.position.set(0,7,-7);light.target.position.set(0,1,-15);root.add(light,light.target);

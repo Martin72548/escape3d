@@ -4,7 +4,10 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
   canvas.setAttribute('role', 'img');
   canvas.setAttribute('aria-label', message);
   document.body.appendChild(canvas);
-  if (action) document.body.appendChild(action);
+  if (action) {
+    action.hidden = true;
+    document.body.appendChild(action);
+  }
   const ctx = canvas.getContext('2d');
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let width, height, mask, sparks;
@@ -23,7 +26,7 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
     const centerX = width * (centered ? .5 : width < 600 ? .41 : .23);
     const centerY = height * verticalPosition;
     const maxTextHeight = action
-      ? Math.min(height * .78, 2 * (height - centerY - action.offsetHeight - 12))
+      ? Math.min(height * .78, 2 * (height - centerY - 48))
       : height * .78;
     let lines;
     do {
@@ -45,6 +48,10 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
       size -= 1;
     } while (true);
     mask.height = Math.ceil(lines.length * lineHeight + 12);
+    if (action) {
+      action.style.left = `${centerX}px`;
+      action.style.top = `${centerY + mask.height / 2}px`;
+    }
     ink.font = `600 ${size}px Georgia, serif`;
     ink.textAlign = 'center';
     ink.textBaseline = 'middle';
@@ -54,11 +61,6 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
     fire.addColorStop(1, '#ff651c');
     ink.fillStyle = fire;
     lines.forEach((text, i) => ink.fillText(text, mask.width / 2, 6 + (i + .5) * lineHeight));
-    if (action) {
-      const textWidth = Math.max(...lines.map(line => ink.measureText(line).width));
-      action.style.right = `${Math.max(8, width - centerX - textWidth / 2)}px`;
-      action.style.top = `${Math.min(centerY + mask.height / 2 + 4, height - action.offsetHeight - 8)}px`;
-    }
     const pixels = ink.getImageData(0, 0, mask.width, mask.height).data;
     sparks = [];
     for (let y = 0; y < mask.height; y += 3) {
@@ -132,6 +134,7 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
       }
     }
     ctx.restore();
+    if (action?.hidden && time > 0) action.hidden = false;
     frame = requestAnimationFrame(draw);
   }
   frame = requestAnimationFrame(draw);

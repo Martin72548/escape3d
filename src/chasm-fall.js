@@ -1,11 +1,12 @@
+import { translate } from './language.js';
 import { createRecordedChasmFallSound } from './recorded-chasm-fall-sound.js';
 import * as THREE from 'three';
 
 export function createChasmFall(parent,prisoner,depth,birds){
  const root=new THREE.Group();root.name='Derrota por caida al precipicio';parent.add(root);
- const canvas=document.createElement('canvas');canvas.width=1400;canvas.height=256;const ctx=canvas.getContext('2d');ctx.fillStyle='#180c15';ctx.fillRect(0,0,1400,256);ctx.strokeStyle='#e77871';ctx.lineWidth=9;ctx.strokeRect(9,9,1382,238);ctx.font='bold 78px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff0e9';ctx.fillText('El juego ha terminado',700,128);
+ const canvas=document.createElement('canvas');canvas.width=1400;canvas.height=256;const ctx=canvas.getContext('2d');ctx.fillStyle='#180c15';ctx.fillRect(0,0,1400,256);ctx.strokeStyle='#e77871';ctx.lineWidth=9;ctx.strokeRect(9,9,1382,238);ctx.font='bold 78px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff0e9';ctx.fillText(translate('Fin de la partie', 'El juego ha terminado'),700,128);
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
- const banner=new THREE.Mesh(new THREE.PlaneGeometry(10,1.85),new THREE.MeshBasicMaterial({map,side:THREE.DoubleSide,depthTest:false,fog:false}));banner.name='El juego ha terminado';banner.visible=false;banner.renderOrder=100;banner.raycast=()=>{};root.add(banner);
+ const banner=new THREE.Mesh(new THREE.PlaneGeometry(10,1.85),new THREE.MeshBasicMaterial({map,side:THREE.DoubleSide,depthTest:false,fog:false}));banner.name=translate('Fin de la partie', 'El juego ha terminado');banner.visible=false;banner.renderOrder=100;banner.raycast=()=>{};root.add(banner);
  const sound=createRecordedChasmFallSound();
  const cloth=new THREE.Mesh(new THREE.ConeGeometry(.08,.16,6),new THREE.MeshStandardMaterial({color:0x626358,roughness:1}));cloth.name='Pliegue de la ropa agarrado por las garras';cloth.position.set(0,1.22,-.18);cloth.visible=false;prisoner.add(cloth);
  const splash=new THREE.Group();splash.name='Impacto del prisionero en el rio';splash.visible=false;root.add(splash);
@@ -24,7 +25,7 @@ export function createChasmFall(parent,prisoner,depth,birds){
  }
  function finish(){
   if(announced)return;announced=true;banner.visible=true;
-  const panel=document.createElement('div');panel.id='chasm-game-over';panel.setAttribute('role','alert');panel.textContent='El juego ha terminado';panel.style.cssText='position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:rgba(13,7,18,.65);color:#fff0e9;font:bold clamp(28px,5vw,64px) system-ui;text-align:center;text-shadow:0 3px 18px #000;padding:24px;pointer-events:none;';document.body.append(panel);
+  const panel=document.createElement('div');panel.id='chasm-game-over';panel.setAttribute('role','alert');panel.textContent=translate('Fin de la partie', 'El juego ha terminado');panel.style.cssText='position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:rgba(13,7,18,.65);color:#fff0e9;font:bold clamp(28px,5vw,64px) system-ui;text-align:center;text-shadow:0 3px 18px #000;padding:24px;pointer-events:none;';document.body.append(panel);
  }
  function updateSplash(dt){
   splashAge+=dt;ring.scale.setScalar(.5+splashAge*2.6);ring.material.opacity=Math.max(0,.8-splashAge*.4);spray.material.opacity=Math.max(0,1-splashAge*.5);

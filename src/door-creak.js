@@ -1,5 +1,5 @@
 import { getGameAudioOutput } from './game-audio.js';
-// A slow, uneven hinge squeal with wood friction, generated locally.
+// Uneven metal squeal and rattling as the iron gate slides up.
 export function createDoorCreak() {
 	let context;
 	function unlock() {
@@ -21,18 +21,20 @@ export function createDoorCreak() {
 		let phase = 0, friction = 0;
 		for (let i = 0; i < samples.length; i++) {
 			const t = i / context.sampleRate, progress = t / duration;
-			const frequency = 210 - 90 * progress + 32 * Math.sin(t * 8) + 7 * Math.sin(t * 63);
+			const frequency = 360 - 155 * progress + 48 * Math.sin(t * 8) + 12 * Math.sin(t * 63);
 			phase += 2 * Math.PI * frequency / context.sampleRate;
 			friction = friction * .8 + (Math.random() * 2 - 1) * .2;
 			const pulse = .65 + .35 * Math.sin(t * 29 + 2 * Math.sin(t * 5));
 			const envelope = Math.min(1, t / .09, (duration - t) / .25);
-			samples[i] = envelope * pulse * (.36 * Math.sin(phase) + .16 * Math.sin(phase * 2) + .08 * Math.sin(phase * 5) + .45 * friction);
+			const squeal = .28 * Math.sin(phase) + .18 * Math.sin(phase * 2.76) + .1 * Math.sin(phase * 5.4);
+			const rattle = .5 * friction * (.4 + .6 * Math.pow(Math.sin(t * 55), 8));
+			samples[i] = envelope * pulse * (squeal + rattle);
 		}
 		const source = context.createBufferSource();
 		source.buffer = buffer;
 		const filter = context.createBiquadFilter();
 		filter.type = 'lowpass';
-		filter.frequency.value = 2400;
+		filter.frequency.value = 3200;
 		const gain = context.createGain();
 		gain.gain.value = .42;
 		source.connect(filter).connect(gain).connect(getGameAudioOutput(context));

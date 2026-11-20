@@ -1,3 +1,4 @@
+import { translate } from './language.js';
 // Keep every defeat screen operable, including deaths without a custom screen.
 export function createGameOverControls(prisoner) {
  const prepared = new WeakSet();
@@ -19,7 +20,8 @@ export function createGameOverControls(prisoner) {
    actions.append(button); card.append(actions); panel.append(card);
   }
   button.type = 'button';
-  button.textContent = 'Recomenzar';
+  button.dataset.dungeonRestart = 'true';
+  button.textContent = translate('Recommencer', 'Recomenzar');
   button.focus();
  }
  return { update(dt) {
@@ -32,7 +34,7 @@ export function createGameOverControls(prisoner) {
   panel.id = 'prisoner-game-over';
   panel.className = 'defeat-screen';
   const title = document.createElement('h1');
-  title.textContent = 'Fin del juego';
+  title.textContent = translate('Fin de la partie', 'Fin del juego');
   panel.append(title); document.body.append(panel); prepare(panel);
  } };
 }
