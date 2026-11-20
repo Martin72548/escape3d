@@ -183,6 +183,15 @@ function addCageWarning(stones){
  return labels;
 }
 
+function paintFireLettering(ctx,text,x,y,maxWidth,fontSize){
+ ctx.shadowColor='#ff3100';ctx.shadowBlur=fontSize*.3;ctx.fillStyle='#ff6505';
+ ctx.fillText(text,x,y,maxWidth);
+ ctx.shadowColor='#ff9900';ctx.shadowBlur=fontSize*.13;
+ const fire=ctx.createLinearGradient(0,y-fontSize/2,0,y+fontSize/2);
+ fire.addColorStop(0,'#fffde8');fire.addColorStop(.5,'#ffe974');fire.addColorStop(.8,'#ffad21');fire.addColorStop(1,'#ff4c05');
+ ctx.fillStyle=fire;ctx.fillText(text,x,y,maxWidth);
+}
+
 function addPuzzleInstruction(stones,labels){
  if(!labels.length)return;
  const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
@@ -196,13 +205,14 @@ function addPuzzleInstruction(stones,labels){
  }
  if(best<0)return;
  const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=384;
- const ctx=canvas.getContext('2d');ctx.font='bold 112px Georgia, serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#211b14';
- ctx.fillText(translate('Découvre le', 'Descubre el'),512,120,940);ctx.fillText(translate('message', 'mensaje'),512,264,940);
+ const ctx=canvas.getContext('2d');ctx.font='bold 112px Georgia, serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ paintFireLettering(ctx,translate('Trouve le','Descubre el'),512,120,900,112);
+ paintFireLettering(ctx,translate('message','mensaje'),512,264,900,112);
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
- const label=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}));
+ const label=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-1}));
  stones.getMatrixAt(best,matrix);matrix.decompose(position,rotation,scale);
  label.position.set(0,0,.515).applyMatrix4(matrix);label.quaternion.copy(rotation);label.scale.set(scale.x*.92,scale.y*.8,1);
- label.name='Descubre el mensaje';label.userData.stoneIndex=best;label.raycast=()=>{};stones.parent.add(label);
+ label.name=translate('Trouve le message','Descubre el mensaje');label.userData.stoneIndex=best;label.raycast=()=>{};stones.parent.add(label);
 }
 
 function addEscapeWord(stones,labels){
@@ -218,9 +228,7 @@ function addEscapeWord(stones,labels){
  if(best<0)throw new Error('No se encontro el ladrillo para Fuis !');
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=192;
  const ctx=canvas.getContext('2d');ctx.font='bold 92px Georgia, serif';ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.shadowColor='#ff3100';ctx.shadowBlur=28;ctx.fillStyle='#ff6505';ctx.fillText(translate('Fuis !', '¡Huye!'),256,100,460);
- ctx.shadowColor='#ff9900';ctx.shadowBlur=12;
- const fire=ctx.createLinearGradient(0,55,0,145);fire.addColorStop(0,'#fffde8');fire.addColorStop(.5,'#ffe974');fire.addColorStop(.8,'#ffad21');fire.addColorStop(1,'#ff4c05');ctx.fillStyle=fire;ctx.fillText(translate('Fuis !', '¡Huye!'),256,100,460);
+ paintFireLettering(ctx,translate('Fuis !','¡Huye!'),256,100,460,92);
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
  const label=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-1}));
  stones.getMatrixAt(best,matrix);matrix.decompose(position,rotation,scale);
