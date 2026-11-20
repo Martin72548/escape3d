@@ -198,9 +198,10 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
   lucia.figure.userData.appearanceReady=addSaintLucia(lucia.figure).catch(error=>console.warn('No se pudo cargar Santa Lucia:',error));
   lucia.figure.userData.museumLucia=true;luciaAttack=createLuciaHaloAttack(scene,lucia.figure,prisoner);
   const george=pedestal(0,-7.5,'San Jorge sobre caballo encabritado',0x4f6257);addSaintGeorge(george.figure);
-  george.figure.userData.museumGeorge=true;georgeEncounter=createGeorgeEncounter(scene,george.figure,prisoner,root);goldenSerpent=createGoldenSerpent(root,george.figure,prisoner);
+  george.figure.userData.museumGeorge=true;georgeEncounter=createGeorgeEncounter(scene,george.figure,prisoner,root);
   for(const base of george.figure.parent.children)if(base.isMesh){base.scale.x=1.25;base.scale.z=1.25;}
   const denis=pedestal(0,0,'San Denis con la cabeza en las manos',0xc7bba5);
+  goldenSerpent=createGoldenSerpent(root,george.figure,prisoner,denis.figure.parent.position);
   const denisStatue=addSaintDenis(denis.figure);denis.figure.userData.museumDenis=true;denisAttack=createDenisAttack(scene,denisStatue,prisoner);
   const saint=pedestal(5,3,'San Sebastian con flechas',0xc9baa0);const sebastian=addSaintSebastian(saint.figure);
   saint.figure.userData.museumSebastian=true;sebastianAttack=createSebastianAttack(scene,saint.figure,prisoner,sebastian);
