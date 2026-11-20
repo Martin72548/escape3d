@@ -14,17 +14,29 @@ export function addMuseumFloorMessage(parent) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = '600 85px Georgia, serif';
-  ctx.fillStyle = '#e9d9ac';
-  ctx.shadowColor = '#211a12';
-  ctx.shadowBlur = 4;
-  ctx.shadowOffsetY = 3;
-  lines.forEach((line, i) => ctx.fillText(line, 1024, 160 + i * 210, 1900));
+  lines.forEach((line, i) => {
+    const y = 160 + i * 210;
+    const flame = ctx.createLinearGradient(0, y - 44, 0, y + 44);
+    flame.addColorStop(0, '#fff8bf');
+    flame.addColorStop(.4, '#ffc04c');
+    flame.addColorStop(.75, '#ff701c');
+    flame.addColorStop(1, '#e5320a');
+
+    ctx.fillStyle = '#fa4b10';
+    ctx.shadowColor = '#ff430c';
+    ctx.shadowBlur = 32;
+    ctx.fillText(line, 1024, y, 1900);
+
+    ctx.fillStyle = flame;
+    ctx.shadowColor = '#ff9b30';
+    ctx.shadowBlur = 10;
+    ctx.fillText(line, 1024, y, 1900);
+  });
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
-  const material = new THREE.MeshStandardMaterial({
-    map: texture, transparent: true, depthWrite: false, roughness: 1,
-    emissive: 0x9d7943, emissiveMap: texture, emissiveIntensity: .3,
+  const material = new THREE.MeshBasicMaterial({
+    map: texture, transparent: true, depthWrite: false, toneMapped: false,
     polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
   });
   const inscription = new THREE.Mesh(new THREE.PlaneGeometry(6, 2.25), material);
