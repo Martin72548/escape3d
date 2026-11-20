@@ -78,7 +78,7 @@ export function addSceneContent(scene) {
 	installPrisonerSleep(prisoner);
 	function showRibbonMessage(hasAllRibbons) {
 		const message = hasAllRibbons
-			? translate("Tresse une corde pour atteindre l'autre bout.", 'Trenza una cuerda para llegar al otro lado.')
+			? translate('Tresse une corde pour franchir le gouffre.', 'Trenza una cuerda para llegar al otro lado.')
 			: translate("On dirait que tu n'as pas assez de rubans. Les as-tu tous pris ?", 'Parece que no tienes suficientes cintas. ¿Las has recogido todas?');
 		showFireMessage(message, { duration: 5, verticalPosition: .18, centered: true, multiline: true });
 	}
