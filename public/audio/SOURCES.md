@@ -141,3 +141,16 @@
 - License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/.
 - Preview: https://cdn.freesound.org/previews/567/567249_7108319-hq.mp3
 - Approximately 4.2 seconds, played once at original speed when the troll wall breaks. Replaces synthesized brick impacts. Mix of CC0 recordings by adamgryu, alancat and spookymodem.
+
+# Corridor gate
+
+- `corridor-gate-recording.mp3` uses the opening excerpt of **Metal gate opening and closing**, recorded by **ThabzMalik**.
+- Source: https://freesound.org/people/ThabzMalik/sounds/767058/
+- License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/.
+
+# Corridor running footsteps
+
+- `stone-boot-footsteps.mp3` is **Hiking Boot Footsteps on Stone**, recorded by **Fission9**.
+- Source: https://freesound.org/people/Fission9/sounds/521590/
+- License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/.
+- Individual footfalls are played in sync with the running animation, pitched down and filtered in game.
