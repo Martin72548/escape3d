@@ -15,12 +15,12 @@
   }
 }
 		</script>
-		<script type="module" crossorigin src="./assets/proyectoVr-CNlIi8Wg.js"></script>
-		<link rel="modulepreload" crossorigin href="./assets/styles-DFl8J-Ca.js">
-		<link rel="modulepreload" crossorigin href="./assets/fire-message-B0z6x-ee.js">
-		<link rel="modulepreload" crossorigin href="./assets/smoke-title-ClrD2vRh.js">
-		<link rel="modulepreload" crossorigin href="./assets/game-audio-DHSQeVL3.js">
-		<link rel="stylesheet" crossorigin href="./assets/styles-B_N9_bv5.css">
+		<script type="module" crossorigin src="./assets/proyectoVr-_SqnBtVK.js"></script>
+		<link rel="modulepreload" crossorigin href="./assets/styles-BXrYuf13.js">
+		<link rel="modulepreload" crossorigin href="./assets/fire-message-Hd9YEKQx.js">
+		<link rel="modulepreload" crossorigin href="./assets/game-audio-ND21Lxpc.js">
+		<link rel="modulepreload" crossorigin href="./assets/smoke-title-C0WCSxZx.js">
+		<link rel="stylesheet" crossorigin href="./assets/styles-D8upoUTc.css">
 	</head>
 	<body class="scene-page">
 		<dialog id="dungeon-intro" aria-labelledby="dungeon-intro-title">
@@ -59,6 +59,10 @@
 		<div id="scoreboard" role="status" aria-live="polite" aria-atomic="true"><span>Points</span><strong id="score-value">0</strong></div>
 		<div id="scene-container" aria-label="Escena tridimensional preparada para realidad virtual"></div>
 		<div id="xr-button-container" aria-live="polite"></div>
+		<select id="language-picker" aria-label="Langue du jeu" hidden>
+			<option value="fr" lang="fr">FR — Français</option>
+			<option value="es" lang="es">ES — Español</option>
+		</select>
 		<button id="sound-toggle" type="button" aria-label="Silenciar sonido" aria-pressed="false" title="Silenciar sonido">
 			<svg viewBox="0 0 64 64" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
 				<path d="M19 18H7a3 3 0 0 0-3 3v22a3 3 0 0 0 3 3h12L34 57a2.5 2.5 0 0 0 4-2V9a2.5 2.5 0 0 0-4-2L19 18v28"/>
@@ -77,7 +81,10 @@
 					panel.style.cssText = 'position:fixed;z-index:100;top:30%;left:10%;right:10%;padding:24px;border:1px solid #ffb46c;border-radius:16px;background:#282130;color:white;font:16px/1.6 system-ui;white-space:pre-wrap;overflow-wrap:anywhere';
 					document.body.appendChild(panel);
 				}
-				panel.textContent = 'No se pudo mostrar la escena 3D.\n' + (error?.message || String(error));
+				const message = document.documentElement.lang === 'es'
+					? 'No se pudo mostrar la escena 3D.'
+					: 'Impossible d’afficher la scène 3D.';
+				panel.textContent = message + '\n' + (error?.message || String(error));
 			};
 			window.addEventListener('error', event => { if (event.message) window.showSceneError(event.error || event.message); });
 			window.addEventListener('unhandledrejection', event => window.showSceneError(event.reason));

@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./main-vr-pdDBILDl.js","./OrbitControls-3n2aYq6J.js","./fire-message-Hd9YEKQx.js","./game-audio-ND21Lxpc.js"])))=>i.map(i=>d[i]);
+import"./styles-BXrYuf13.js";import{i as e,t}from"./game-audio-ND21Lxpc.js";import{t as n}from"./smoke-title-C0WCSxZx.js";t(document.getElementById(`sound-toggle`)),e(document),n(()=>import(`./main-vr-pdDBILDl.js`),__vite__mapDeps([0,1,2,3]),import.meta.url).catch(window.showSceneError);
