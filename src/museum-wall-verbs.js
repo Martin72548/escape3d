@@ -1,9 +1,11 @@
 import * as THREE from 'three';
+import { translate } from './language.js';
 
 export function addMuseumWallVerbs(stones) {
-  const phrases = ['Il va', 'il vient', 'il entre', 'il sort', 'il monte',
+  const phrases = translate(['Il va', 'il vient', 'il entre', 'il sort', 'il monte',
     'il descend', 'il meurt', 'il na\u00eet', 'il retourne', 'il passe',
-    'il arrive', 'il part', 'il reste'];
+    'il arrive', 'il part', 'il reste'],
+    ['Va', 'viene', 'entra', 'sale', 'sube', 'baja', 'muere', 'nace', 'regresa', 'pasa', 'llega', 'se va', 'se queda']);
   const matrix = new THREE.Matrix4();
   const position = new THREE.Vector3();
   const rotation = new THREE.Quaternion();

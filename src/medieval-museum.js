@@ -38,12 +38,14 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
  const chant=createGregorianAmbience();
  let pending=null,sebastianAttack=null,denisAttack=null,luciaAttack=null,georgeEncounter=null,tombPassage=null,lowerChamber=null,chasm=null;
  const scoredStatues=new Set();
+ let wallPhrases;
  let effigyEncounter=null,goldenSerpent=null;
  const batSwarm=createMuseumBatSwarm(root,prisoner,scene);
  function awardDestroyedStatues(){
   for(const [name,destroyed]of [['sebastian',sebastianAttack?.exploded],['denis',denisAttack?.state==='exploded'],['lucia',luciaAttack?.exploded],['george',georgeEncounter?.state==='melted']]){
    if(destroyed&&!scoredStatues.has(name)){scoredStatues.add(name);onPointEarned(name);}
   }
+  if(!wallPhrases&&scoredStatues.size===4&&effigyEncounter?.defeated)wallPhrases=addMuseumWallPhrases(root);
  }
 
  function cast(hit){
@@ -143,7 +145,6 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
  function build(){
   const tombX=-5;
   addMuseumFloorMessage(root);
-  addMuseumWallPhrases(root);
   const wallStone=createStoneMaterial();
   const mortar=new THREE.MeshStandardMaterial({color:0x34312b,roughness:1});
   // The open stairwell leaves room for the full-height prisoner through the final tread.

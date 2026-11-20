@@ -1,9 +1,9 @@
 import { getGameAudioOutput } from './game-audio.js';
 import { publicAssetBase } from './public-asset-base.js';
 ﻿// Real field recording: adharca, Freesound #275471, CC0. See public/audio/SOURCES.md.
-export function createRecordedDoorCreak({ volume = .85 } = {}){
+export function createRecordedDoorCreak({ volume = .85, filename = 'old-door-recording.mp3', excerptDuration } = {}){
  let context=null,ready=null,buffer=null,active=null;
- const file=fetch(`${publicAssetBase}audio/old-door-recording.mp3`).then(response=>{if(!response.ok)throw new Error('Door recording HTTP '+response.status);return response.arrayBuffer();});
+ const file=fetch(`${publicAssetBase}audio/${filename}`).then(response=>{if(!response.ok)throw new Error('Door recording HTTP '+response.status);return response.arrayBuffer();});
  // Retain the promise for decoding, and handle a failed preload without interrupting gameplay.
  file.catch(error=>console.warn('No se pudo cargar el chirrido grabado:',error));
  function unlock(){
@@ -23,7 +23,16 @@ export function createRecordedDoorCreak({ volume = .85 } = {}){
    if(context.state!=='running')return false;
    stop();
    const source=context.createBufferSource(),gain=context.createGain();source.buffer=recording;gain.gain.value=volume;source.connect(gain).connect(getGameAudioOutput(context));active=source;
-   source.onended=()=>{source.disconnect();gain.disconnect();if(active===source)active=null;};source.start();return true;
+   source.onended=()=>{source.disconnect();gain.disconnect();if(active===source)active=null;};
+   if (excerptDuration === undefined) source.start();
+   else {
+    const start = context.currentTime;
+    const length = Math.min(excerptDuration, recording.duration);
+    gain.gain.setValueAtTime(volume, start + Math.max(0, length - .08));
+    gain.gain.linearRampToValueAtTime(0, start + length);
+    source.start(start, 0, length);
+   }
+   return true;
   }catch(error){console.error('No se pudo reproducir el chirrido grabado:',error);return false;}
  }
  return {unlock,play,stop,get duration(){return buffer?.duration??4.57;}};

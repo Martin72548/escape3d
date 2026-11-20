@@ -1,11 +1,12 @@
 import * as THREE from 'three';
+import { translate } from './language.js';
 
 export function addMuseumFloorMessage(parent) {
-  const lines = [
+  const lines = translate([
     'Sur le mur au fond lance',
     'un rayon sur la phrase',
     'S - V - OD - OI - CT - CL',
-  ];
+  ], ['En el muro del fondo,', 'lanza un rayo a la frase', 'S - V - OD - OI - CCT - CCL']);
   const canvas = document.createElement('canvas');
   canvas.width = 2048;
   canvas.height = 768;

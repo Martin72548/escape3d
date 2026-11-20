@@ -16,7 +16,7 @@ export function createMuseumBatSwarm(museum, prisoner, scene = museum) {
   }
   function unlockAudio() { sound.unlock(); scream.unlock(); }
   function trigger() {
-    if (active || defeated || prisoner.userData.dead) return;
+    if (active || defeated || prisoner.userData.dead) return false;
     active = true; unlockAudio(); sound.start();
     for (let i = 0; i < 13; i++) {
       const bat = createBat(i, { white: i === 12, black: i !== 12 });
@@ -25,6 +25,7 @@ export function createMuseumBatSwarm(museum, prisoner, scene = museum) {
       museum.add(bat.root); bats.push(bat);
     }
     update(0);
+    return true;
   }
   function release() {
     if (!attacker) return;

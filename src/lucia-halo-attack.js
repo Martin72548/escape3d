@@ -1,5 +1,6 @@
 import { createChokedCrySound } from './choked-cry-sound.js';
 import { createHaloBoomerangSound } from './halo-boomerang-sound.js';
+import { translate } from './language.js';
 import * as THREE from 'three';
 import { createLuciaDestruction } from './lucia-destruction.js';
 
@@ -51,7 +52,7 @@ export function createLuciaHaloAttack(scene,figure,prisoner){
   chokedCry.stop();finished=true;state='finished';prisoner.userData.dead=prisoner.userData.gameOver=prisoner.userData.fallen=true;
   if(typeof document==='undefined')return;
   const panel=document.createElement('div');panel.id='lucia-game-over';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.style.cssText='position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:rgba(8,7,6,.8);color:#eee4cf;font-family:system-ui;text-align:center';
-  const card=document.createElement('div'),title=document.createElement('h1'),text=document.createElement('p'),button=document.createElement('button');title.textContent='Fin del juego';text.textContent='El halo de Santa Lucía acabó con el prisionero.';button.textContent='Volver a empezar';button.style.cssText='padding:12px 24px;font:inherit;cursor:pointer';button.onclick=()=>window.location.reload();card.append(title,text,button);panel.append(card);document.body.append(panel);button.focus();
+  const card=document.createElement('div'),title=document.createElement('h1'),text=document.createElement('p'),button=document.createElement('button');title.textContent=translate('Fin de la partie', 'Fin del juego');text.textContent=translate('Le halo de sainte Lucie a terrassé le prisonnier.', 'El halo de Santa Lucía acabó con el prisionero.');button.textContent=translate('Recommencer', 'Volver a empezar');button.style.cssText='padding:12px 24px;font:inherit;cursor:pointer';button.onclick=()=>window.location.reload();card.append(title,text,button);panel.append(card);document.body.append(panel);button.focus();
  }
  function update(dt){
   destruction.update(dt);

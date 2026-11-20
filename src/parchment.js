@@ -1,3 +1,4 @@
+import { translate } from './language.js';
 import * as THREE from 'three';
 
 export function createParchment() {
@@ -22,8 +23,8 @@ export function createParchment() {
 	context.textAlign = 'center';
 	context.textBaseline = 'middle';
 	context.font = 'bold 54px Georgia, serif';
-	context.fillText('Tocando la antorcha siniestra', 512, 210);
-	context.fillText('del fondo podrás seguir tu camino.', 512, 300);
+	context.fillText(translate('Touche la torche de gauche', 'Tocando la antorcha siniestra'), 512, 210);
+	context.fillText(translate('au fond pour poursuivre ton chemin.', 'del fondo podrás seguir tu camino.'), 512, 300);
 
 	const texture = new THREE.CanvasTexture(canvas);
 	texture.colorSpace = THREE.SRGBColorSpace;

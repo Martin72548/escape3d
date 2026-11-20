@@ -5,13 +5,13 @@ const introduction = translate(`Aide le magicien à s’échapper.
 
 La clé qui ouvre la porte est cachée sous une dalle ou une brique de ce sombre cachot. Les bêtes et les monstres sont dangereux, mais tu as ta magie pour les détruire. Ouvre la porte et passe au niveau suivant.
 
-Pour te déplacer, utilise les touches W, A, S et D.
+Pour te déplacer, utilise les touches W, A, S et D. Pour faire de la magie, clique.
 
 Que la chance t’accompagne !`, `Ayuda al mago prisionero a escapar de este oscuro calabozo.
 
 La llave que abre la puerta está escondida bajo una losa o un ladrillo. Destruye todo lo que ponga en peligro al mago, abre la puerta y pasa al siguiente nivel.
 
-Usa las teclas W, A, S y D para moverte por el calabozo.
+Usa las teclas W, A, S y D para moverte por el calabozo. Para hacer magia, haz clic.
 
 ¡Buena suerte!`);
 
