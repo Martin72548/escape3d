@@ -40,7 +40,7 @@
 			if (entryUrl.searchParams.get('restart') === '1') {
 				entryUrl.searchParams.delete('restart');
 				window.history.replaceState(window.history.state, '', entryUrl.href);
-			} else if (entryUrl.searchParams.get('intro') === '1') dungeonIntro.showModal();
+			} else if (entryUrl.searchParams.get('intro') === '1' && entryUrl.searchParams.get('scene') !== '4') dungeonIntro.showModal();
 			// Keep game shortcuts inactive while reading; native dialog controls still work.
 			for (const type of ['keydown', 'keyup']) window.addEventListener(type, event => {
 				if (dungeonIntro.open) event.stopImmediatePropagation();
@@ -93,6 +93,8 @@
 		<script type="module">
 			import('/src/main-vr.js').catch(window.showSceneError);
 		</script>
-		<script type="module" src="/src/smoke-title.js"></script>
+		<script type="module">
+			if (new URLSearchParams(location.search).get('scene') !== '4') import('/src/smoke-title.js');
+		</script>
 	</body>
 </html>
