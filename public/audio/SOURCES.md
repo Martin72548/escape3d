@@ -154,3 +154,4 @@
 - Source: https://freesound.org/people/Fission9/sounds/521590/
 - License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/.
 - Individual footfalls are played in sync with the running animation, pitched down and filtered in game.
+- `harpy-wing-flaps.mp3`: **pigeons_fly away_ wing flaps_CsG**, by **csaszi**, [Freesound](https://freesound.org/people/csaszi/sounds/528250/), CC0 1.0. The game slows and filters the recording during flight.
