@@ -2,7 +2,7 @@ import { publicAssetBase } from './public-asset-base.js';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-export async function refineFinalHarpy(harpy){
+export async function refineHarpyFace(harpy,{windSwept=false,skinTint=0xffffff}={}){
  const head=harpy.bird.getObjectByName('Cabeza de mujer');
  const base=publicAssetBase,loader=new GLTFLoader();
  const [bodyAsset,hairAsset]=await Promise.all([loader.loadAsync(`${base}models/prisoner/base_body.glb`),loader.loadAsync(`${base}models/saint-lucia/hair_long01.glb`)]);
@@ -34,10 +34,23 @@ export async function refineFinalHarpy(harpy){
   }
   if(!indices.length)return;
   const geometry=original.clone(),vertices=new Float32Array(positions.count*3);
-  for(let i=0;i<positions.count;i++)source.getVertexPosition(i,point).applyMatrix4(source.matrixWorld).applyMatrix4(transform).toArray(vertices,i*3);
-  geometry.setAttribute('position',new THREE.BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.morphAttributes={};geometry.deleteAttribute('skinIndex');geometry.deleteAttribute('skinWeight');geometry.computeVertexNormals();geometry.computeBoundingSphere();
+  for(let i=0;i<positions.count;i++){
+   source.getVertexPosition(i,point).applyMatrix4(source.matrixWorld).applyMatrix4(transform);
+   if(windSwept&&model===hair){
+    const length=Math.max(0,.12-point.y);
+    const sweep=length*THREE.MathUtils.smoothstep(length,0,.6);
+    point.y+=sweep*.69;
+    point.z-=sweep*.91;
+   }
+   point.toArray(vertices,i*3);
+  }
+  geometry.setAttribute('position',new THREE.BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.morphAttributes={};geometry.deleteAttribute('skinIndex');geometry.deleteAttribute('skinWeight');geometry.computeVertexNormals();
+  // Exclude the discarded body vertices from the head's bounds.
+  const visibleGeometry=model===body&&source.name==='Body'?geometry.toNonIndexed():geometry;
+  if(visibleGeometry!==geometry)geometry.dispose();
   const material=source.material.clone();material.roughness=model===hair?.78:.65;material.metalness=0;
-  const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=mesh.receiveShadow=true;realistic.add(mesh);
+  if(source.name==='Body')material.color.multiply(new THREE.Color(skinTint));
+  const mesh=new THREE.Mesh(visibleGeometry,material);mesh.castShadow=mesh.receiveShadow=true;realistic.add(mesh);
  });
  if(!realistic.children.length)throw Error('No anatomical harpy face geometry');
  head.children.forEach(part=>part.visible=false);head.add(realistic);

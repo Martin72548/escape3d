@@ -2,6 +2,7 @@ import { isStandingOnGoalCross } from './goal-cross.js';
 import { addTrunkWords } from './trunk-words.js';
 import { createTrunkWordPickup } from './trunk-word-pickup.js';
 import { createChasmFall } from './chasm-fall.js';
+import { createChasmWordRescue } from './chasm-word-rescue.js';
 import { createChasmVictory } from './chasm-victory.js';
 import { createHarpyFlock } from './harpy-flock.js';
 import { createChasmRockMaterial, createChasmRiver } from './chasm-river.js';
@@ -12,7 +13,8 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  const bankEdge=10.5,groundY=.22,postRadius=.76,postStep=2.65,postOffset=1.25;
  const jumpDistance=Math.hypot(2*postOffset,postStep),jumpDuration=.78;
  const posts=Array.from({length:7},(_,i)=>({x:i%2===0?-postOffset:postOffset,z:(3-i)*postStep}));
- const hasFooting=(x,z)=>Math.abs(z)>=bankEdge||posts.some(post=>Math.hypot(x-post.x,z-post.z)<=postRadius);
+ const footingPost=(x,z)=>posts.findIndex(post=>Math.hypot(x-post.x,z-post.z)<=postRadius);
+ const hasFooting=(x,z)=>Math.abs(z)>=bankEdge||footingPost(x,z)>=0;
  const cliffStone=createChasmRockMaterial(),stone=cliffStone.clone();stone.vertexColors=false;
  const earth=new THREE.MeshStandardMaterial({color:0x534d3c,roughness:1});
  const moss=new THREE.MeshStandardMaterial({color:0x48543b,roughness:1});
@@ -89,12 +91,21 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  const bound=value=>THREE.MathUtils.clamp(value,-16.5,16.5);
  prisoner.userData.constrainMovement=(x,z)=>({x:bound(x),y:groundY,z:bound(z)});
  const birds=createHarpyFlock(root),victory=createChasmVictory(root,prisoner,{compact:true,horizontalScale:1.75}),fall=createChasmFall(root,prisoner,river.depth,birds);
- let jump=null;
- const blocked=()=>fall.active||victory.active||prisoner.userData.dead||prisoner.userData.gameOver;
+ const rescue=createChasmWordRescue(root,prisoner,groundY,river.depth,()=>fall.begin(undefined,{cry:false}));
+ let jump=null,lastPost=-1;
+ const blocked=()=>rescue.active||fall.active||victory.active||prisoner.userData.dead||prisoner.userData.gameOver;
+ function beginFall(){
+  if(lastPost<0){fall.begin();return;}
+  rescue.begin(posts[lastPost],posts[lastPost+1]??{x:0,z:-11.5});
+  fall.sound.startScream();
+ }
+ function takeRescueWord(word){
+  if(rescue.take(word))fall.sound.stopScream();
+ }
  prisoner.userData.jumpAcrossChasm=direction=>{
   const {x,z}=prisoner.position;
   if(jump||blocked()||!hasFooting(x,z))return;
-  const yaw=direction.lengthSq()>0?Math.atan2(direction.x,direction.z):prisoner.rotation.y;
+  const yaw=direction?.lengthSq()>0?Math.atan2(direction.x,direction.z):prisoner.rotation.y;
   let endX=bound(x+Math.sin(yaw)*jumpDistance),endZ=bound(z+Math.cos(yaw)*jumpDistance);
   const landingPost=posts.find(post=>Math.hypot(post.x-endX,post.z-endZ)<=postRadius+.35);
   if(landingPost){endX=landingPost.x;endZ=landingPost.z;}
@@ -105,7 +116,9 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  function updateCrossing(dt){
   if(blocked())return;
   if(!jump){
-   if(!hasFooting(prisoner.position.x,prisoner.position.z))fall.begin();
+   const {x,z}=prisoner.position;
+   if(!hasFooting(x,z))beginFall();
+   else lastPost=footingPost(x,z);
    return;
   }
   jump.age+=dt;
@@ -114,23 +127,29 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
   if(t===1){
    jump=null;
    prisoner.userData.chasmJumping=false;
-   if(!hasFooting(prisoner.position.x,prisoner.position.z))fall.begin();
+   if(!hasFooting(prisoner.position.x,prisoner.position.z))beginFall();
+   else lastPost=footingPost(prisoner.position.x,prisoner.position.z);
   }
  }
- const bodyBox=new THREE.Box3(),partBox=new THREE.Box3(),sweep=new THREE.Vector3();
+ const flightPath=new THREE.Line3(),prisonerOnGround=new THREE.Vector3(),nearest=new THREE.Vector3();
+ const harpyReach=2.1;
  function checkBirdContact(flight,previous){
-  if(fall.active||victory.active||!flight.active||prisoner.userData.dead||prisoner.position.z>10.5||prisoner.position.z< -10.5)return;
-  const scale=prisoner.scale.y;
-  bodyBox.min.set(prisoner.position.x-.25*scale,prisoner.position.y+.12*scale,prisoner.position.z-.22*scale);
-  bodyBox.max.set(prisoner.position.x+.25*scale,prisoner.position.y+1.82*scale,prisoner.position.z+.22*scale);
-  flight.bird.updateWorldMatrix(true,true);sweep.copy(previous).sub(flight.bird.position);
-  let touched=false;
-  flight.bird.traverse(part=>{if(touched||!part.isMesh)return;partBox.setFromObject(part);const oldBox=partBox.clone().translate(sweep);partBox.union(oldBox);if(partBox.intersectsBox(bodyBox))touched=true;});
-  if(touched){jump=null;prisoner.userData.chasmJumping=false;birds.select(flight);fall.begin(flight.direction);}
+  if(blocked()||!flight.active||Math.abs(prisoner.position.z)>=bankEdge)return;
+  const position=flight.bird.position;
+  if(position.y-prisoner.position.y>1.82*prisoner.scale.y+3.1)return;
+  flightPath.start.copy(previous).setY(0);
+  flightPath.end.copy(position).setY(0);
+  prisonerOnGround.copy(prisoner.position).setY(0);
+  if(flightPath.start.equals(flightPath.end))nearest.copy(flightPath.end);
+  else flightPath.closestPointToPoint(prisonerOnGround,true,nearest);
+  if(nearest.distanceToSquared(prisonerOnGround)>harpyReach**2)return;
+  jump=null;prisoner.userData.chasmJumping=false;
+  birds.select(flight);
+  fall.begin(flight.direction);
  }
  let age=0;
  const wordPickup=createTrunkWordPickup(prisoner,root.userData.wordsReady,onPointEarned,()=>blocked()||jump!==null);
- return {root,river,birds,victory,fall,goalCross,takeWord:wordPickup.take,update(dt){age+=dt;river.update(dt);updateCrossing(dt);const previous=birds.flights.map(flight=>({position:flight.bird.position.clone(),pass:flight.pass}));birds.update(dt);birds.flights.forEach((flight,index)=>checkBirdContact(flight,flight.pass!==previous[index].pass?flight.bird.position:previous[index].position));fall.update(dt);
+ return {root,river,birds,victory,fall,rescue,goalCross,takeWord:wordPickup.take,takeRescueWord,update(dt,inXR=false){age+=dt;river.update(dt);updateCrossing(dt);const previous=birds.flights.map(flight=>({position:flight.bird.position.clone(),pass:flight.pass}));birds.update(dt);birds.flights.forEach((flight,index)=>checkBirdContact(flight,flight.pass!==previous[index].pass?flight.bird.position:previous[index].position));rescue.update(dt,inXR);fall.update(dt);
  if(!jump&&!blocked()&&isStandingOnGoalCross(prisoner,goalCross)){birds.stop();victory.start();}
  wordPickup.update(dt);victory.update(dt);mist.forEach((layer,i)=>layer.position.x=Math.sin(age*.08+i)*2);}};
 }

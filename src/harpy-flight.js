@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { statueExplosionSound } from './statue-explosion-sound.js';
+import { addHarpyRaptorBody } from './harpy-raptor-body.js';
 
-export function createHarpyFlight(parent,{limit=29,centerZ=-8.5,laneVariation=1.5,initialDirection=1}={}){
+export function createHarpyFlight(parent,{limit=29,centerZ=-8.5,laneVariation=1.5,initialDirection=1,speed=10.8,upright=false}={}){
  const root=new THREE.Group();root.name='Pajaros gigantes con cabeza de mujer';parent.add(root);
  const bird=new THREE.Group();bird.name='Pajaro de cabeza femenina y cabellos largos';bird.userData.spellTarget='flying-harpy';root.add(bird);
- const plumage=new THREE.MeshStandardMaterial({color:0x393c48,roughness:.68,metalness:.12});
- const lighter=new THREE.MeshStandardMaterial({color:0x777782,roughness:.8});
+ const plumage=new THREE.MeshStandardMaterial({color:upright?0x453127:0x393c48,roughness:.84});
+ const lighter=new THREE.MeshStandardMaterial({color:upright?0x765440:0x777782,roughness:.8});
  const skin=new THREE.MeshStandardMaterial({color:0xd1a28b,roughness:.66});
  const shadow=new THREE.MeshStandardMaterial({color:0x9b6f5c,roughness:.8});
  const hairMaterial=new THREE.MeshStandardMaterial({color:0x493025,roughness:.73});
@@ -24,20 +25,26 @@ export function createHarpyFlight(parent,{limit=29,centerZ=-8.5,laneVariation=1.
  const featherMaterial=plumage.clone();featherMaterial.map=featherMap;featherMaterial.side=THREE.DoubleSide;
  const paleFeather=lighter.clone();paleFeather.map=featherMap;paleFeather.side=THREE.DoubleSide;
  function feather(parent,x,y,z,width,length,angle=0,pale=false){const f=new THREE.Mesh(featherGeometry,pale?paleFeather:featherMaterial);f.position.set(x,y,z);f.scale.set(width,1,length);f.rotation.y=angle;f.castShadow=true;parent.add(f);return f;}
- oval(bird,plumage,0,0,0,.72,.65,1.45);oval(bird,lighter,0,-.13,.67,.58,.48,.68);
- for(let row=0;row<5;row++)for(let side=-1;side<=1;side+=2)for(let j=0;j<4;j++)feather(bird,side*(.25+j*.1),.38-j*.11,.7-row*.36,.9,.85,Math.PI+side*.3,row%3===0);
- for(let i=0;i<9;i++)feather(bird,(i-4)*.12,.05,-1.1,1.2,1.8+Math.sin(i/8*Math.PI)*.7,Math.PI+(i-4)*.1,i%3===0);
+ const raptorLegs=upright?addHarpyRaptorBody(bird):[];
+ if(!upright){
+  oval(bird,plumage,0,0,0,.72,.65,1.45);oval(bird,lighter,0,-.13,.67,.58,.48,.68);
+  for(let row=0;row<5;row++)for(let side=-1;side<=1;side+=2)for(let j=0;j<4;j++)feather(bird,side*(.25+j*.1),.38-j*.11,.7-row*.36,.9,.85,Math.PI+side*.3,row%3===0);
+ }
+ for(let i=0;i<9;i++){
+  const tail=feather(bird,(i-4)*.12,upright?-.42:.05,upright?-.13:-1.1,1.2,1.8+Math.sin(i/8*Math.PI)*.7,Math.PI+(i-4)*.1,i%3===0);
+  if(upright)tail.rotateX(-.54);
+ }
  const wings=[];
  for(const side of [-1,1]){
-  const wing=new THREE.Group();wing.position.set(side*.52,.2,.15);wing.scale.x=side;bird.add(wing);wings.push(wing);
+  const wing=new THREE.Group();wing.position.set(side*(upright?.42:.52),upright?.82:.2,upright?.06:.15);wing.scale.x=side;bird.add(wing);wings.push(wing);
   const outline=new THREE.Shape();outline.moveTo(0,.6);outline.quadraticCurveTo(1.7,1,3.7,.5);outline.lineTo(4.1,-.15);outline.quadraticCurveTo(2.1,-1.7,0,-.7);outline.closePath();
   const g=new THREE.ShapeGeometry(outline,14);g.rotateX(Math.PI/2);const membrane=new THREE.Mesh(g,featherMaterial);wing.add(membrane);
   for(let i=0;i<15;i++)feather(wing,.15+i*.25,.025,.25-i*.035,1.1,1.25+i*.045,Math.PI-.25-i*.018,i%4===0);
   for(let i=0;i<12;i++)feather(wing,.15+i*.27,.055,.6-i*.025,.8,.9,Math.PI-.1,i%4===0);
  }
  // A human face, with no beak, rises above the bird's feathered breast.
- oval(bird,skin,0,.73,.7,.21,.46,.22);
- const head=new THREE.Group();head.position.set(0,1.26,.8);head.name='Cabeza de mujer';bird.add(head);
+ if(!upright)oval(bird,skin,0,.73,.7,.21,.46,.22);
+ const head=new THREE.Group();head.position.set(0,upright?1.51:1.26,upright?.17:.8);head.name='Cabeza de mujer';bird.add(head);
  oval(head,skin,0,.08,0,.36,.46,.32);oval(head,skin,0,-.2,.1,.27,.24,.25);
  oval(head,skin,0,-.31,.18,.15,.09,.15);
  for(const side of [-1,1]){
@@ -62,14 +69,15 @@ export function createHarpyFlight(parent,{limit=29,centerZ=-8.5,laneVariation=1.
   const lock=new THREE.Mesh(g,strand%4===0?hairLight:hairMaterial);lock.frustumCulled=false;lock.castShadow=true;bird.add(lock);hair.push({mesh:lock,phase:strand*.61,rings,sides});
  }
  const talons=[],birdLegs=[];
- for(const side of [-1,1]){
+ if(!upright)for(const side of [-1,1]){
   const leg=oval(bird,plumage,side*.35,-.66,.05,.12,.38,.13);leg.rotation.x=-.6;birdLegs.push(leg);
   for(let i=0;i<3;i++){const claw=new THREE.Mesh(new THREE.ConeGeometry(.045,.3,8),ivory);claw.position.set(side*.35+(i-1)*.09,-.96,.32);claw.rotation.x=Math.PI*.65;bird.add(claw);talons.push(claw);}
  }
  let carrying=false,enabled=true,active=true,direction=initialDirection,pass=0,age=0,pause=0,burstAge=0,flash=null;
  const feathers=[],sparks=[];
  const sparkGeometry=new THREE.SphereGeometry(1,8,6),sparkMaterial=new THREE.MeshBasicMaterial({color:0xffba60,transparent:true,opacity:.9});
- bird.position.set(-direction*limit,4.5,centerZ);bird.rotation.y=direction*Math.PI/2;
+ const flightAltitude=upright?5.55:4.5;
+ bird.position.set(-direction*limit,flightAltitude,centerZ);bird.rotation.y=direction*Math.PI/2;
  function target(mesh){for(let o=mesh;o;o=o.parent)if(o===bird)return active?bird:null;return null;}
  function explode(mesh){
   if(!target(mesh))return false;
@@ -82,18 +90,22 @@ export function createHarpyFlight(parent,{limit=29,centerZ=-8.5,laneVariation=1.
   for(let i=0;i<28;i++){const spark=new THREE.Mesh(sparkGeometry,sparkMaterial.clone());spark.position.copy(center);spark.scale.setScalar(.08+Math.random()*.15);spark.raycast=()=>{};root.add(spark);sparks.push({mesh:spark,velocity:new THREE.Vector3((Math.random()-.5)*10,(Math.random()-.3)*8,(Math.random()-.5)*10),age:0});}
   flash=new THREE.PointLight(0xff9f35,45,16);flash.position.copy(center);root.add(flash);return true;
  }
- function beginPass(){direction=-direction;pass++;active=true;bird.visible=true;bird.position.set(-direction*limit,4.5+(pass%3)*.45,centerZ+(pass%2?laneVariation:-laneVariation));bird.rotation.y=direction*Math.PI/2;}
+ function beginPass(){direction=-direction;pass++;active=true;bird.visible=true;bird.position.set(-direction*limit,flightAltitude+(pass%3)*.45,centerZ+(pass%2?laneVariation:-laneVariation));bird.rotation.y=direction*Math.PI/2;}
  function update(dt){
   age+=dt;
   if(active||carrying){
-   if(active){bird.position.x+=direction*10.8*dt;bird.position.y=4.5+(pass%3)*.45+Math.sin(age*3.8)*.24;bird.rotation.z=Math.sin(age*3.8)*.035;}
+   if(active){bird.position.x+=direction*speed*dt;bird.position.y=flightAltitude+(pass%3)*.45+Math.sin(age*3.8)*.24;bird.rotation.z=Math.sin(age*3.8)*.035;}
    const flap=Math.sin(age*5.4);wings.forEach((wing,i)=>wing.rotation.z=(i===0?-1:1)*(.1+flap*.65));
    head.rotation.x=.06+Math.sin(age*2)*.035;
-   for(const lock of hair){const p=lock.mesh.geometry.attributes.position;
+   raptorLegs.forEach((leg,i)=>{
+    leg.rotation.x=carrying?-.85:-.24+Math.sin(age*3+i)*.06;
+    leg.scale.setScalar(carrying?.74:1);
+   });
+   for(const lock of hair){if(!lock.mesh.visible)continue;const p=lock.mesh.geometry.attributes.position;
     for(let j=0;j<=lock.rings;j++){const t=j/lock.rings,radius=(1-t*.82)*.065,anchor=Math.sin(lock.phase)*.31;
      const x=anchor*(1-t*.2)+Math.sin(age*5-t*8+lock.phase)*t*.12;
-     const y=1.48+Math.cos(lock.phase)*.16-t*.8+Math.sin(age*4-t*7+lock.phase)*t*.07;
-     const z=.63+Math.cos(lock.phase)*.16-t*2.7;
+     const y=head.position.y+.22+Math.cos(lock.phase)*.16-t*.8+Math.sin(age*4-t*7+lock.phase)*t*.07;
+     const z=head.position.z-.17+Math.cos(lock.phase)*.16-t*2.7;
      for(let k=0;k<lock.sides;k++){const a=k/lock.sides*Math.PI*2;p.setXYZ(j*lock.sides+k,x+Math.cos(a)*radius,y+Math.sin(a)*radius,z);}
     }p.needsUpdate=true;lock.mesh.geometry.computeVertexNormals();
    }

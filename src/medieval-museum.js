@@ -52,6 +52,10 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
  }
 
  function cast(hit){
+  if(chasm?.rescue.active){
+   chasm.takeRescueWord(hit?.mesh);
+   return;
+  }
   if(active&&hit?.point&&!hit.mesh&&!prisoner.userData.dead&&!prisoner.userData.gameOver&&!prisoner.userData.haloTrapped&&!tombPassage?.active){spellRays.emit(hit.point);return;}
   if(active&&!tombPassage&&!lowerChamber&&!chasm&&!prisoner.userData.dead&&!prisoner.userData.gameOver&&!chant.playing)chant.start();
   if(chasm){
@@ -108,7 +112,7 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
    if(shot.isExitPhrase){shots.length=0;tombPassage.trigger();return;}
    if(shot.curtainHit)chasm.victory.curtain.hit(shot.curtainHit);
    if(shot.isStatue)statueImpact.play();
-   if(shot.chasmTarget&&shot.chasmFlight&&shot.harpyPass===shot.chasmFlight.pass)shot.chasmFlight.hit(shot.chasmTarget);if(shot.lowerHit)lowerChamber.cast(shot.lowerHit);if(shot.isSebastian)sebastianAttack.hit(false);if(shot.isDenisHead)denisAttack.hit();if(shot.isLucia)luciaAttack.hit(false);if(shot.isGeorge)georgeEncounter.trigger({activate:false});if(shot.isTomb)effigyEncounter?.hit();awardDestroyedStatues();
+   if(shot.chasmTarget&&shot.chasmFlight&&shot.harpyPass===shot.chasmFlight.pass)chasm.birds.hit(shot.chasmTarget);if(shot.lowerHit)lowerChamber.cast(shot.lowerHit);if(shot.isSebastian)sebastianAttack.hit(false);if(shot.isDenisHead)denisAttack.hit();if(shot.isLucia)luciaAttack.hit(false);if(shot.isGeorge)georgeEncounter.trigger({activate:false});if(shot.isTomb)effigyEncounter?.hit();awardDestroyedStatues();
  }
  function updateSpell(dt){
   spellRays.update(dt);
@@ -185,9 +189,8 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
   tombPassage=createTombPassage(scene,tomb,prisoner,()=>{
    chant.stop();
    for(const object of scene.children){if(object===prisoner||object.isCamera||object.name.startsWith('XR')||object.name.includes('controller'))continue;object.visible=false;}
-   shots.length=0;pending=null;prisoner.userData.currentLevel=3;lowerChamber=buildLowerChamber(scene,prisoner,()=>{
-    shots.length=0;pending=null;lowerChamber.root.visible=false;chasm=buildChasmScene(scene,prisoner,()=>onPointEarned());
-   },()=>onPointEarned());
+   shots.length=0;pending=null;prisoner.userData.currentLevel=3;
+   lowerChamber=buildLowerChamber(scene,prisoner,enterChasm,()=>onPointEarned());
    showFireMessage(translate(
     "Cage de la louve.\nN'ouvre pas la cage si tu ne veux pas être mangé.",
     'Jaula de la loba.\nNo abras la jaula si no quieres que te devore.',
@@ -210,6 +213,27 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
   tripalium.position.set(-7.7,0,6.8);
   const accent=new THREE.PointLight(0xffcc87,25,9,2);accent.position.set(0,3.8,-6.8);root.add(accent);
  }
+ function enterChasm(){
+  if(chasm)return;
+  if(lowerChamber)lowerChamber.root.visible=false;
+  else{
+   for(const object of scene.children){if(object===prisoner||object.isCamera||object.name.startsWith('XR')||object.name.includes('controller'))continue;object.visible=false;}
+   prisoner.userData.sleeping=false;
+  }
+  active=true;
+  shots.length=0;pending=null;
+  chasm=buildChasmScene(scene,prisoner,()=>onPointEarned());
+  showFireMessage(translate(
+   'Gare aux harpies qui veillent sur le chemin vers la victoire.',
+   'Cuidado con las arpías que vigilan el camino hacia la victoria.',
+  ), {
+   title: translate('Le gouffre des harpies', 'El abismo de las arpías'),
+   duration: 5,
+   verticalPosition: .22,
+   multiline: true,
+   centered: true,
+  });
+ }
  function enter(){
   if(active)return;active=true;
   age=0;nextStatue=0;
@@ -231,6 +255,6 @@ export function createMedievalMuseum(scene, prisoner, onPointEarned=()=>{}) {
    else statue?.trigger();
   }
  }
- function update(dt){if(!active)return;batSwarm.update(dt);if(prisoner.userData.dead||prisoner.userData.gameOver)chant.stop();if(chasm){updateSpell(dt);chasm.update(dt);return;}if(lowerChamber){updateSpell(dt);lowerChamber.update(dt);return;}effigyEncounter?.update(dt);torches.forEach(torch=>torch.update(dt));if(tombPassage?.active){updateSpell(dt);tombPassage.update(dt);return;}updateSpell(dt);updateStatueSequence(dt);sebastianAttack?.update(dt);denisAttack?.update(dt);luciaAttack?.update(dt);if(!goldenSerpent?.active)georgeEncounter?.update(dt);goldenSerpent?.update(dt);awardDestroyedStatues();}
- return {enter,update,cast,root,get statuePoints(){return scoredStatues.size;},get level(){return chasm?4:lowerChamber?3:2;},get passageState(){return tombPassage?.state;},get isCasting(){return false;},get active(){return active;}};
+ function update(dt,inXR=false){if(!active)return;batSwarm.update(dt);if(prisoner.userData.dead||prisoner.userData.gameOver)chant.stop();if(chasm){updateSpell(dt);chasm.update(dt,inXR);return;}if(lowerChamber){updateSpell(dt);lowerChamber.update(dt);return;}effigyEncounter?.update(dt);torches.forEach(torch=>torch.update(dt));if(tombPassage?.active){updateSpell(dt);tombPassage.update(dt);return;}updateSpell(dt);updateStatueSequence(dt);sebastianAttack?.update(dt);denisAttack?.update(dt);luciaAttack?.update(dt);if(!goldenSerpent?.active)georgeEncounter?.update(dt);goldenSerpent?.update(dt);awardDestroyedStatues();}
+ return {enter,enterChasm,update,cast,root,get statuePoints(){return scoredStatues.size;},get level(){return chasm?4:lowerChamber?3:2;},get passageState(){return tombPassage?.state;},get isCasting(){return false;},get active(){return active;}};
 }

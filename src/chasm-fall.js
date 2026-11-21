@@ -15,9 +15,11 @@ export function createChasmFall(parent,prisoner,depth,birds){
  const spray=new THREE.Points(sprayGeometry,new THREE.PointsMaterial({color:0xecfffb,size:.18,transparent:true,opacity:.9,depthWrite:false}));spray.frustumCulled=false;splash.add(spray);
  let active=false,completed=false,age=0,start=null,side=1,birdStart=null,yaw=0,released=false,drop=null,escape=null,splashAge=0,announced=false;
  let liftDuration=1.8;
+ let cryOnRelease=true;
  const fallDuration=3,grip=new THREE.Vector3(0,-.96,1.05);
- function begin(direction){
+ function begin(direction,{cry=true}={}){
   if(active||prisoner.userData.gameWon)return;active=true;start=prisoner.position.clone();side=direction>=0?1:-1;yaw=prisoner.rotation.y;
+  cryOnRelease=cry;
   if(direction===undefined){liftDuration=0;birds.stop();}
   else{birdStart=birds.bird.position.clone();birds.capture();cloth.visible=true;}
   prisoner.userData.fallen=true;prisoner.userData.gameOver=true;prisoner.userData.chasmFalling=false;
@@ -45,7 +47,7 @@ export function createChasmFall(parent,prisoner,depth,birds){
   if(!released){
    released=true;cloth.visible=false;prisoner.userData.chasmFalling=true;
    drop=liftDuration?new THREE.Vector3(start.x+side*2.4,start.y+4.8,0):start;
-   prisoner.position.copy(drop);if(liftDuration)escape=birds.bird.position.clone();sound.play();
+   prisoner.position.copy(drop);if(liftDuration)escape=birds.bird.position.clone();if(cryOnRelease)sound.startScream();
   }
   const t=Math.min(fallDuration,age-liftDuration),fraction=t/fallDuration;
   const z=THREE.MathUtils.lerp(drop.z,THREE.MathUtils.clamp(drop.z,-4.8,4.8),fraction);
@@ -53,6 +55,7 @@ export function createChasmFall(parent,prisoner,depth,birds){
   prisoner.rotation.z=side*Math.min(Math.PI*.65,t*2);prisoner.rotation.x=Math.sin(t*3)*.35;
   if(escape){if(t<2)birds.carryAt(escape.clone().add(new THREE.Vector3(side*t*10.8,t*2.5,0)),yaw);else birds.stop();}
   if(t>=fallDuration){
+   sound.playSplash();
    prisoner.userData.dead=true;prisoner.userData.chasmFalling=false;completed=true;splash.position.set(prisoner.position.x,-depth+.4,prisoner.position.z);splash.visible=true;splashAge=0;birds.stop();
   }
  }

@@ -1,8 +1,8 @@
-export function showFireMessage(message, { duration = 6, verticalPosition = .34, centered = false, multiline = false, action, onComplete } = {}) {
+export function showFireMessage(message, { title, duration = 6, verticalPosition = .34, centered = false, multiline = false, action, onComplete } = {}) {
   const canvas = document.createElement('canvas');
   canvas.className = 'smoke-title';
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', message);
+  canvas.setAttribute('aria-label', title ? `${title}\n${message}` : message);
   document.body.appendChild(canvas);
   if (action) {
     action.hidden = true;
@@ -21,38 +21,42 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
     mask = document.createElement('canvas');
     mask.width = Math.round(multiline ? Math.min(width * .88, 850) : Math.min(width < 600 ? width * .72 : width * .36, 560));
     let size = Math.max(16, Math.min(27, mask.width / 17));
-    let lineHeight;
     const ink = mask.getContext('2d');
     const centerX = width * (centered ? .5 : width < 600 ? .41 : .23);
     const centerY = height * verticalPosition;
     const maxTextHeight = action
       ? Math.min(height * .78, 2 * (height - centerY - 48))
       : height * .78;
-    let lines;
-    do {
-      lineHeight = size * 1.5;
-      ink.font = `600 ${size}px Georgia, serif`;
-      lines = [];
-      for (const paragraph of message.split('\n')) {
+    function wrap(text, fontSize, weight) {
+      const font = `${weight} ${fontSize}px Georgia, serif`;
+      ink.font = font;
+      const lines = [];
+      for (const paragraph of text.split('\n')) {
         let line = '';
         for (const word of paragraph.split(' ')) {
           const next = line ? `${line} ${word}` : word;
           if (line && ink.measureText(next).width > mask.width - 16) {
-            lines.push(line);
+            lines.push({ text: line, font, height: fontSize * 1.5 });
             line = word;
           } else line = next;
         }
-        lines.push(line);
+        lines.push({ text: line, font, height: fontSize * 1.5 });
       }
-      if (!multiline || lines.length * lineHeight + 12 <= maxTextHeight || size <= 10) break;
+      return lines;
+    }
+    let lines, textHeight;
+    do {
+      const titleLines = title ? wrap(title, size * 1.65, 700) : [];
+      lines = [...titleLines, ...wrap(message, size, 600)];
+      textHeight = lines.reduce((total, line) => total + line.height, 0) + 12;
+      if (!multiline || textHeight <= maxTextHeight || size <= 10) break;
       size -= 1;
     } while (true);
-    mask.height = Math.ceil(lines.length * lineHeight + 12);
+    mask.height = Math.ceil(textHeight);
     if (action) {
       action.style.left = `${centerX}px`;
       action.style.top = `${centerY + mask.height / 2}px`;
     }
-    ink.font = `600 ${size}px Georgia, serif`;
     ink.textAlign = 'center';
     ink.textBaseline = 'middle';
     const fire = ink.createLinearGradient(0, 0, 0, mask.height);
@@ -60,7 +64,12 @@ export function showFireMessage(message, { duration = 6, verticalPosition = .34,
     fire.addColorStop(.5, '#ffc25d');
     fire.addColorStop(1, '#ff651c');
     ink.fillStyle = fire;
-    lines.forEach((text, i) => ink.fillText(text, mask.width / 2, 6 + (i + .5) * lineHeight));
+    let y = 6;
+    for (const line of lines) {
+      ink.font = line.font;
+      ink.fillText(line.text, mask.width / 2, y + line.height / 2);
+      y += line.height;
+    }
     const pixels = ink.getImageData(0, 0, mask.width, mask.height).data;
     sparks = [];
     for (let y = 0; y < mask.height; y += 3) {

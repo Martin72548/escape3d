@@ -1,6 +1,7 @@
 import { movementHint, translate } from './language.js';
 import { createAdaptiveResolution } from './adaptive-resolution.js';
 import { createDungeonMusic } from './dungeon-music.js';
+import { unlockHarpyWingAudio } from './harpy-wing-audio.js';
 import { enableFullscreen } from './desktop-fullscreen.js';
 import { enableDungeonRestart } from './restart-dungeon.js';
 
@@ -45,6 +46,11 @@ orbitControls.zoomSpeed = 0.6;
 orbitControls.maxPolarAngle = Math.PI * 0.49;
 
 const { floorGeometry, grid, axes, updateHiddenKey, updateExitGrip, slabSpell, prisoner, museum, onSceneClick } = addSceneContent(scene);
+const sceneUrl = new URL(window.location.href);
+if (sceneUrl.searchParams.get('scene') === '4') {
+ dungeonIntro?.close();
+ museum.enterChasm();
+}
 const dungeonMusic = createDungeonMusic();
 function startDungeonMusic(event) {
  if (museum.active || prisoner.userData.dead) return;
@@ -53,7 +59,10 @@ function startDungeonMusic(event) {
 }
 window.addEventListener('pointerdown', startDungeonMusic, { capture: true });
 window.addEventListener('keydown', startDungeonMusic, { capture: true });
+window.addEventListener('pointerdown', unlockHarpyWingAudio, { once: true, capture: true });
+window.addEventListener('keydown', unlockHarpyWingAudio, { once: true, capture: true });
 renderer.xr.addEventListener('sessionstart', () => dungeonMusic.start());
+renderer.xr.addEventListener('sessionstart', unlockHarpyWingAudio);
 // Prepare spell resources during startup so the first click is responsive.
 slabSpell.prepare(renderer,camera).catch(error=>console.warn('Preparacion del rayo:',error));
 document.querySelector('#dungeon-intro-close')?.addEventListener('pointerdown',()=>slabSpell.unlockAudio(),{once:true});
@@ -225,7 +234,26 @@ function animate() {
 	prisonerKeyboard.update(deltaTime);
 	if (!museum.active && !prisoner.userData.crossingDungeonExit) slabSpell.update(deltaTime);
 	updateHiddenKey(deltaTime);
-	museum.update(deltaTime);
+	const previousRescueView = prisoner.userData.chasmRescueView;
+	museum.update(deltaTime, renderer.xr.isPresenting);
+	const rescueView = prisoner.userData.chasmRescueView || previousRescueView;
+	if (rescueView && !renderer.xr.isPresenting) {
+		if (firstPerson.active) firstPerson.setActive(false);
+		const { x, y, z } = prisoner.position;
+		if (rescueView === 'rising') {
+			const rim = THREE.MathUtils.smoothstep(y, -8, 0);
+			camera.position.set(
+				10 * (1 - rim),
+				THREE.MathUtils.lerp(y + 6, 10, rim),
+				THREE.MathUtils.lerp(THREE.MathUtils.clamp(z + 9, -8, 8), 22, rim),
+			);
+			orbitControls.target.set(x * (1 - rim), THREE.MathUtils.lerp(y + 1.25, 2, rim), z * (1 - rim));
+		} else {
+			camera.position.set(x, y + 1.7, z + 4.15);
+			orbitControls.target.set(x, y + 1.25, z);
+		}
+		camera.lookAt(orbitControls.target);
+	}
 	if (prisoner.userData.crossingDungeonExit && !renderer.xr.isPresenting && !firstPerson.active) {
 		const { x, z } = prisoner.position;
 		const follow = 1 - Math.exp(-6 * deltaTime);

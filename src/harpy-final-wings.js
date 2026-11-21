@@ -1,19 +1,20 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-// Detailed feather geometry belongs only to the final, close-up presentation.
-export function refineFinalHarpyWings(harpy) {
+export function refineHarpyPlumage(harpy, { upright = false } = {}) {
  const size=256,data=new Uint8Array(size*size*4);
  let seed=6921;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
   const u=x/(size-1),v=y/(size-1),shaft=Math.exp(-Math.abs(u-.48)*160);
   const barbs=Math.sin(v*440+Math.abs(u-.48)*95+Math.sin(v*19)*2);
-  const shade=110+barbs*22+shaft*65+(random()-.5)*16+Math.sin(v*6)*18;
+  const bands=Math.sin(v*35+Math.abs(u-.48)*2.4)>.4?-18:0;
+  const shade=122+barbs*22+shaft*56+(random()-.5)*16+Math.sin(v*6)*18+bands;
   data.set([shade,shade*.98,shade*.93,255],(y*size+x)*4);
  }
  const texture=new THREE.DataTexture(data,size,size);texture.colorSpace=THREE.SRGBColorSpace;texture.needsUpdate=true;texture.anisotropy=4;
- const materials=[0x747776,0x626769,0x96958d].map(color=>new THREE.MeshStandardMaterial({color,map:texture,bumpMap:texture,bumpScale:.012,roughness:.84,metalness:0,side:THREE.DoubleSide}));
- const shaftMaterial=new THREE.MeshStandardMaterial({color:0x8b8a7e,roughness:.76});
+ const palette=upright?[0x694a37,0x473128,0x8b6046]:[0x747776,0x626769,0x96958d];
+ const materials=palette.map(color=>new THREE.MeshStandardMaterial({color,map:texture,bumpMap:texture,bumpScale:.012,roughness:.84,metalness:0,side:THREE.DoubleSide}));
+ const shaftMaterial=new THREE.MeshStandardMaterial({color:upright?0x654c3a:0x8b8a7e,roughness:.76});
  const wrists=[];
  function feather(batches,shafts,base,end,width,tone){
   const length=base.distanceTo(end),rotation=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),end.clone().sub(base).normalize());
@@ -39,14 +40,13 @@ export function refineFinalHarpyWings(harpy) {
   if(shafts.length){const mesh=new THREE.Mesh(mergeGeometries(shafts),shaftMaterial);mesh.name='Canones finos de las plumas';mesh.castShadow=true;group.add(mesh);shafts.forEach(g=>g.dispose());}
  }
  for(const wing of harpy.wings){
-  // The flight scene keeps its original wings; these instances serve the final only.
   for(const child of [...wing.children])child.removeFromParent();
   wing.name='Ala anatomica con plumas superpuestas';
   const wrist=new THREE.Group();wrist.name='Muneca y remeras primarias';wrist.position.set(2.15,.025,.04);wing.add(wrist);wrists.push(wrist);
   const batches=[[],[],[]],shafts=[],outer=[[],[],[]],outerShafts=[];
   // Broad, overlapping secondary flight feathers follow the bent forearm.
-  for(let i=0;i<18;i++){
-   const x=.28+i*.112;
+  for(let i=0;i<19;i++){
+   const x=.07+i*.12;
    feather(batches,shafts,new THREE.Vector3(x,.015,.12),new THREE.Vector3(x-.24,.02,-.95-Math.sin(i/17*Math.PI)*.48),.29,i%3);
   }
   // Long asymmetric primaries fan out at the wrist, with individually visible tips.
@@ -65,5 +65,49 @@ export function refineFinalHarpyWings(harpy) {
   }
   finish(wing,batches,shafts);finish(wrist,outer,outerShafts);
  }
+ if(upright){
+  const batches=[[],[],[]], shafts=[];
+  for(const side of [-1,1]){
+   // Feather roots arc from the shoulders down the outer chest.
+   for(let row=0;row<4;row++)for(let i=0;i<6;i++){
+    const angle=.18+i*.23+row*.10;
+    const y=.96-row*.17;
+    const x=side*Math.sin(angle)*(.46-row*.018);
+    const z=.12+Math.cos(angle)*.29;
+    feather(batches,shafts,new THREE.Vector3(x,y,z),
+     new THREE.Vector3(x+side*.078,y-.31,z+.016),.135,(i+row)%3);
+   }
+   // Coverts bridge the pelvis and the thick upper legs.
+   for(let row=0;row<3;row++)for(let i=0;i<12;i++){
+    const angle=(i-2)*.29+row*.11;
+    const x=side*(.23+Math.sin(angle)*(.18+row*.018));
+    const y=-.27-row*.17;
+    const z=.14+Math.cos(angle)*(.25+row*.035);
+    feather(batches,shafts,new THREE.Vector3(x,y,z),
+     new THREE.Vector3(x+side*.08,y-.37,z-.055),.14,(i+row)%3);
+   }
+  }
+  finish(harpy.bird,batches,shafts);
+  return wrists;
+ }
+ const breast=[[],[],[]],breastShafts=[];
+ for(let row=0;row<5;row++){
+  const y=.49-row*.19, radius=Math.sqrt(1-(y/.65)**2);
+  for(let i=0;i<13;i++){
+   const angle=(i-6+(row%2)*.5)*.205;
+   const x=Math.sin(angle)*.73*radius;
+   const z=Math.cos(angle)*1.46*radius;
+   feather(breast,breastShafts,new THREE.Vector3(x,y,z),
+    new THREE.Vector3(x*1.09,y-.3,z+(row<2?.19:.025)),.19,(row+i)%3);
+  }
+ }
+ const collar=[[],[],[]],collarShafts=[];
+ for(let i=0;i<18;i++){
+  const angle=i/18*Math.PI*2, x=Math.sin(angle), z=Math.cos(angle);
+  feather(collar,collarShafts,new THREE.Vector3(x*.19,.91,.7+z*.2),
+   new THREE.Vector3(x*.34,.44,.7+z*.34),.14,i%3);
+ }
+ finish(harpy.bird,breast,breastShafts);
+ finish(harpy.bird,collar,collarShafts);
  return wrists;
 }

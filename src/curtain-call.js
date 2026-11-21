@@ -1,5 +1,5 @@
 import { translate } from './language.js';
-import { refineFinalHarpy } from './harpy-realistic-face.js';
+import { refineHarpyFace } from './harpy-realistic-face.js';
 import * as THREE from 'three';
 import { createToad } from './cat-encounter.js';
 import { createNoFaceEncounter } from './no-face-encounter.js';
@@ -12,7 +12,7 @@ import { addSaintSebastian } from './saint-sebastian.js';
 import { createMummyModel } from './mummy-model.js';
 import { createZombie } from './zombie-encounter.js';
 import { positionCurtainActors } from './curtain-layout.js';
-import { refineFinalHarpyWings } from './harpy-final-wings.js';
+import { refineHarpyPlumage } from './harpy-final-wings.js';
 
 export const CURTAIN_CAST=['Sin Cara','Sapo','Mujer pajaro','Hombre lobo','Troll','Lagarto','Santa Lucia','San Sebastian','Momia','Zombie'];
 
@@ -59,10 +59,10 @@ export function createCurtainCall(parent,prisoner){
  const noFace=createNoFaceEncounter(staging,prisoner,{openWall:false});noFace.spawn(new THREE.Vector3(0,2,0));noFace.update(.5);sources.set('Sin Cara',noFace.root.children[0]);
  sources.set('Sapo',createToad(false).root);
  const harpy=createHarpyFlight(staging);harpy.update(0);harpy.update(0);
- const harpyWrists=refineFinalHarpyWings(harpy);
+ const harpyWrists=refineHarpyPlumage(harpy);
  harpy.wings.forEach((wing,index)=>{wing.rotation.set(0,0,(index===0?-1:1)*Math.PI*.31);});
  sources.set('Mujer pajaro',harpy.bird);
- pending.push(refineFinalHarpy(harpy).catch(error=>console.warn('No se pudo mejorar el rostro de la mujer pajaro:',error)));
+ pending.push(refineHarpyFace(harpy).catch(error=>console.warn('No se pudo mejorar el rostro de la mujer pajaro:',error)));
  sources.set('Hombre lobo',createWerewolfEncounter(staging,prisoner,()=>{}).root);
  sources.set('Troll',createTrollModel().root);
  sources.set('Lagarto',createKomodoEncounter(staging,prisoner).root);

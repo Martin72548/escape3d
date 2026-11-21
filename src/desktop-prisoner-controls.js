@@ -41,8 +41,8 @@ export function enablePrisonerKeyboard({prisoner,camera,renderer,canTurn=()=>tru
 		}
 		if(jumpRequested){
 			jumpRequested=false;
-			const jump=prisoner.userData.jumpInExitCorridor??prisoner.userData.jumpAcrossChasm;
-			jump?.(direction);
+			if(inCorridor)prisoner.userData.jumpInExitCorridor?.(direction);
+			else prisoner.userData.jumpAcrossChasm?.(prisoner.userData.firstPersonActive?forward:undefined);
 		}
 		if(inCorridor)prisoner.userData.runningToGate=direction.lengthSq()>0;
 		const previousStep = Math.floor((prisoner.userData.walkCycle ?? 0) / Math.PI);
