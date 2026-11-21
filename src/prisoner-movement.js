@@ -55,8 +55,12 @@ export function createPrisonerMovement(prisoner, { scripted = false } = {}) {
 			distance = Math.hypot(prisoner.position.x - oldX, prisoner.position.z - oldZ);
 			if (turn) {
 				const yaw = Math.atan2(move.x, move.z);
-				const delta = Math.atan2(Math.sin(yaw - prisoner.rotation.y), Math.cos(yaw - prisoner.rotation.y));
-				prisoner.rotation.y += delta * (1 - Math.exp(-12 * dt));
+				if (prisoner.userData.currentLevel === 4) {
+					prisoner.rotation.y = yaw;
+				} else {
+					const delta = Math.atan2(Math.sin(yaw - prisoner.rotation.y), Math.cos(yaw - prisoner.rotation.y));
+					prisoner.rotation.y += delta * (1 - Math.exp(-12 * dt));
+				}
 			}
 		}
 
