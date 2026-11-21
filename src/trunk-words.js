@@ -4,8 +4,13 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { translate } from './language.js';
 import { publicAssetBase } from './public-asset-base.js';
 
+let trunkFont;
+export function loadTrunkFont() {
+  return trunkFont ??= new FontLoader().loadAsync(`${publicAssetBase}fonts/helvetiker_bold.typeface.json`);
+}
+
 export async function addTrunkWords(parent, posts, groundY) {
-  const font = await new FontLoader().loadAsync(`${publicAssetBase}fonts/helvetiker_bold.typeface.json`);
+  const font = await loadTrunkFont();
   const words = translate(['dragon', 'courageux', 'grande', 'château', 'dame'],
     ['dragón', 'valiente', 'grande', 'castillo', 'dama']);
   const group = new THREE.Group(); group.name = 'Mots en trois dimensions sur les pilotis'; parent.add(group);

@@ -23,7 +23,8 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xbfd7ea);
 scene.fog = new THREE.Fog(0xbfd7ea, 18, 42);
 
-const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
+const normalCameraFov = 55;
+const camera = new THREE.PerspectiveCamera(normalCameraFov, 1, 0.1, 100);
 camera.position.set(7, 5, 9);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -237,6 +238,14 @@ function animate() {
 	const previousRescueView = prisoner.userData.chasmRescueView;
 	museum.update(deltaTime, renderer.xr.isPresenting);
 	const rescueView = prisoner.userData.chasmRescueView || previousRescueView;
+	const fallingView = rescueView === 'falling' && !renderer.xr.isPresenting;
+	const nextFov = fallingView
+		? Math.max(65, THREE.MathUtils.radToDeg(2 * Math.atan(2.55 / (2.95 * camera.aspect))))
+		: normalCameraFov;
+	if (camera.fov !== nextFov) {
+		camera.fov = nextFov;
+		camera.updateProjectionMatrix();
+	}
 	if (rescueView && !renderer.xr.isPresenting) {
 		if (firstPerson.active) firstPerson.setActive(false);
 		const { x, y, z } = prisoner.position;
@@ -249,8 +258,9 @@ function animate() {
 			);
 			orbitControls.target.set(x * (1 - rim), THREE.MathUtils.lerp(y + 1.25, 2, rim), z * (1 - rim));
 		} else {
-			camera.position.set(x, y + 1.7, z + 4.15);
-			orbitControls.target.set(x, y + 1.25, z);
+			const side = prisoner.userData.chasmRescueViewSide;
+			camera.position.set(x, y + 1.95, THREE.MathUtils.clamp(z + side * 3.15, -9.9, 9.9));
+			orbitControls.target.set(x, y + 1.65, z);
 		}
 		camera.lookAt(orbitControls.target);
 	}

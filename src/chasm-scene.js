@@ -91,12 +91,16 @@ export function buildChasmScene(scene,prisoner,onPointEarned=()=>{}){
  const bound=value=>THREE.MathUtils.clamp(value,-16.5,16.5);
  prisoner.userData.constrainMovement=(x,z)=>({x:bound(x),y:groundY,z:bound(z)});
  const birds=createHarpyFlock(root),victory=createChasmVictory(root,prisoner,{compact:true,horizontalScale:1.75}),fall=createChasmFall(root,prisoner,river.depth,birds);
- const rescue=createChasmWordRescue(root,prisoner,groundY,river.depth,()=>fall.begin(undefined,{cry:false}));
+ const rescue=createChasmWordRescue(root,prisoner,groundY,river.depth,()=>fall.begin(undefined,{cry:false}),bark);
  let jump=null,lastPost=-1;
  const blocked=()=>rescue.active||fall.active||victory.active||prisoner.userData.dead||prisoner.userData.gameOver;
  function beginFall(){
-  if(lastPost<0){fall.begin();return;}
-  rescue.begin(posts[lastPost],posts[lastPost+1]??{x:0,z:-11.5});
+  if(lastPost<0){
+   const {x,z}=prisoner.position;
+   const distance=post=>Math.hypot(post.x-x,post.z-z);
+   const closest=posts.reduce((near,post)=>distance(post)<distance(near)?post:near);
+   rescue.begin(closest,closest);
+  }else rescue.begin(posts[lastPost],posts[lastPost+1]??{x:0,z:-11.5});
   fall.sound.startScream();
  }
  function takeRescueWord(word){

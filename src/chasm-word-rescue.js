@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { translate } from './language.js';
+import { loadTrunkFont } from './trunk-words.js';
 
 const categories = translate([
   { prompt: 'Prends un adjectif', words: ['agile', 'sombre', 'léger', 'brave'] },
@@ -16,18 +17,20 @@ const categories = translate([
 ]);
 const descentDuration = 22;
 
-function label(text, width, height) {
+function label(text, width, height, framed = true) {
   const canvas = document.createElement('canvas');
   canvas.width = 512;
   canvas.height = Math.round(512 * height / width);
   const ctx = canvas.getContext('2d');
-  ctx.beginPath();
-  ctx.roundRect(4, 4, 504, canvas.height - 8, 32);
-  ctx.fillStyle = '#211c2c';
-  ctx.fill();
-  ctx.strokeStyle = '#ffc77d';
-  ctx.lineWidth = 6;
-  ctx.stroke();
+  if (framed) {
+    ctx.beginPath();
+    ctx.roundRect(4, 4, 504, canvas.height - 8, 32);
+    ctx.fillStyle = '#211c2c';
+    ctx.fill();
+    ctx.strokeStyle = '#ffc77d';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+  }
   ctx.fillStyle = '#fff4d6';
   ctx.font = `bold ${Math.round(canvas.height * .52)}px system-ui`;
   ctx.textAlign = 'center';
@@ -41,11 +44,56 @@ function label(text, width, height) {
   );
 }
 
-export function createChasmWordRescue(parent, prisoner, groundY, depth, onMiss) {
+function makeWordGeometry(word, font) {
+  const size = .34;
+  const letters = Array.from(word.toUpperCase(), letter => letter.normalize('NFD'));
+  const shapes = font.generateShapes(letters.map(letter => letter[0]).join(''), size);
+  let offset = 0;
+  for (const [letter, accent] of letters) {
+    const glyph = font.data.glyphs[letter];
+    const units = size / font.data.resolution;
+    if (accent) {
+      const x = offset + (glyph.x_min + glyph.x_max) * units / 2;
+      const y = size + .035;
+      const mark = new THREE.Shape();
+      mark.moveTo(x - .065, y);
+      if (accent === '\u0302') {
+        mark.lineTo(x, y + .06); mark.lineTo(x + .065, y);
+        mark.lineTo(x + .032, y); mark.lineTo(x, y + .029); mark.lineTo(x - .032, y);
+      } else {
+        const slant = accent === '\u0300' ? -.05 : .05;
+        mark.lineTo(x - .037 + slant, y + .055);
+        mark.lineTo(x - .007 + slant, y + .055);
+        mark.lineTo(x - .03, y);
+      }
+      mark.closePath();
+      shapes.push(mark);
+    }
+    offset += glyph.ha * units;
+  }
+  const geometry = new THREE.ExtrudeGeometry(shapes, {
+    depth: .076, curveSegments: 10, bevelEnabled: true,
+    bevelThickness: .014, bevelSize: .012, bevelSegments: 3,
+  });
+  geometry.computeBoundingBox();
+  const width = geometry.boundingBox.max.x - geometry.boundingBox.min.x;
+  geometry.center();
+  const scale = Math.min(1, 1.7 / width);
+  geometry.scale(scale, scale, scale);
+  return geometry;
+}
+
+export function createChasmWordRescue(parent, prisoner, groundY, depth, onMiss, barkMaterial) {
   const branches = new THREE.Group();
   parent.add(branches);
   branches.visible = false;
-  const wood = new THREE.LineBasicMaterial({ color: 0xc69961 });
+  const wood = barkMaterial.clone();
+  wood.bumpScale = .024;
+  const cord = new THREE.MeshStandardMaterial({ color: 0xa58b6c, roughness: .95 });
+  const wordMaterials = [
+    new THREE.MeshStandardMaterial({ color: 0xf0e3c9, roughness: .78, emissive: 0x665338, emissiveIntensity: .35 }),
+    new THREE.MeshStandardMaterial({ color: 0xcaaf86, roughness: .84, emissive: 0x54432e, emissiveIntensity: .27 }),
+  ];
   const prompts = categories.map(({ prompt }) => {
     const mesh = label(prompt, 2.6, .46);
     mesh.raycast = () => {};
@@ -84,32 +132,80 @@ export function createChasmWordRescue(parent, prisoner, groundY, depth, onMiss) 
   cloud.raycast = () => {};
   parent.add(cloud);
 
-  const words = [];
+  function hangingBranch(points, baseRadius, tipRadius, material) {
+    const curve = new THREE.CatmullRomCurve3(points);
+    const lengthSegments = 12, radialSegments = 8;
+    const geometry = new THREE.TubeGeometry(curve, lengthSegments, baseRadius, radialSegments);
+    const position = geometry.attributes.position;
+    const vertex = new THREE.Vector3();
+    for (let ring = 0; ring <= lengthSegments; ring++) {
+      const t = ring / lengthSegments;
+      const center = curve.getPointAt(t);
+      const taper = THREE.MathUtils.lerp(1, tipRadius / baseRadius, t);
+      for (let side = 0; side <= radialSegments; side++) {
+        const index = ring * (radialSegments + 1) + side;
+        const ridge = 1 + .09 * Math.sin(side / radialSegments * Math.PI * 6 + t * 4);
+        vertex.fromBufferAttribute(position, index).sub(center).multiplyScalar(taper * ridge).add(center);
+        position.setXYZ(index, vertex.x, vertex.y, vertex.z);
+      }
+    }
+    geometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.raycast = () => {};
+    return mesh;
+  }
+  const words = new Map();
   for (let row = 0; row < 28; row++) {
     for (let column = 0; column < 2; column++) {
       const slot = row * 2 + column;
       const category = slot % categories.length;
       const options = categories[category].words;
       const word = options[Math.floor(slot / categories.length) % options.length];
-      const mesh = label(word, 1.45, .46);
-      const x = column === 0 ? -1.27 : 1.27;
-      const y = THREE.MathUtils.lerp(groundY + .65, -depth + 1, row / 27);
-      mesh.position.set(x, y, 1.34);
+      const mesh = new THREE.Group();
+      mesh.add(label(word.toUpperCase(), 1.45, .46, false));
+      const side = column === 0 ? -1 : 1;
+      const variation = Math.sin(slot * 2.17);
+      const x = side * (1.48 + variation * .075);
+      const y = THREE.MathUtils.lerp(groundY - .62, -depth + 1, row / 27) + variation * .19;
+      const z = 1.21 + variation * .075;
+      mesh.position.set(x, y, z);
+      mesh.rotation.set(0, -side * .13, variation * .075);
       mesh.userData.spellTarget = 'rescue-word';
       mesh.userData.category = category;
-      const branch = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x * .32, y + .54, .57),
-        new THREE.Vector3(x, y + .49, 1.34),
-        new THREE.Vector3(x, y + .21, 1.34),
-      ]), wood);
-      branch.raycast = () => {};
-      branches.add(branch, mesh);
-      words.push(mesh);
+      const base = new THREE.Vector3(side * .66, y + .31, .20);
+      const elbow = new THREE.Vector3(side * .90, y + .45 + variation * .09, .50);
+      const bend = new THREE.Vector3(side * 1.20, y + .61, .88);
+      const tip = new THREE.Vector3(x, y + .55, z);
+      branches.add(
+        hangingBranch([base, elbow, bend, tip], .092, .013, wood),
+        hangingBranch([elbow, new THREE.Vector3(side * 1.04, y + .72, .57),
+          new THREE.Vector3(side * 1.13, y + .83 + variation * .12, .59)], .041, .005, wood),
+        hangingBranch([tip, new THREE.Vector3(x, y + .33, z),
+          new THREE.Vector3(x, y + .13, z)], .009, .008, cord),
+        mesh,
+      );
+      words.set(mesh, word);
     }
   }
+  const hitGeometry = new THREE.BoxGeometry(1.7, .48, .15);
+  const hitMaterial = new THREE.MeshBasicMaterial({ visible: false });
+  loadTrunkFont().then(font => {
+    const geometries = new Map();
+    for (const [group, word] of words) {
+      if (!geometries.has(word)) geometries.set(word, makeWordGeometry(word, font));
+      const [fallback] = group.children;
+      fallback.geometry.dispose();
+      fallback.material.map.dispose();
+      fallback.material.dispose();
+      fallback.removeFromParent();
+      const letters = new THREE.Mesh(geometries.get(word), wordMaterials);
+      letters.raycast = () => {};
+      group.add(letters, new THREE.Mesh(hitGeometry, hitMaterial));
+    }
+  }).catch(error => console.warn('Lettres en volume indisponibles', error));
 
   const start = new THREE.Vector3(), launch = new THREE.Vector3(), landing = new THREE.Vector3();
-  let phase = 'idle', elapsed = 0, attempt = 0, category = 0, wrongUntil = 0;
+  let phase = 'idle', elapsed = 0, attempt = 0, category = 0, wrongUntil = 0, viewSide = 1;
 
   function hideWords() {
     branches.visible = false;
@@ -121,6 +217,8 @@ export function createChasmWordRescue(parent, prisoner, groundY, depth, onMiss) 
     start.copy(prisoner.position);
     landing.set(next.x, groundY, next.z);
     branches.position.set(post.x, 0, post.z);
+    viewSide = post.z > 0 ? -1 : 1;
+    branches.rotation.y = viewSide === 1 ? 0 : Math.PI;
     branches.visible = true;
     category = attempt++ % categories.length;
     notice.textContent = categories[category].prompt;
@@ -129,10 +227,13 @@ export function createChasmWordRescue(parent, prisoner, groundY, depth, onMiss) 
     phase = 'falling';
     prisoner.userData.fallen = true;
     prisoner.userData.chasmRescueView = 'falling';
+    prisoner.userData.chasmRescueViewSide = viewSide;
   }
 
   function take(word) {
-    if (phase !== 'falling' || !words.includes(word)) return false;
+    if (phase !== 'falling') return false;
+    while (word && !words.has(word)) word = word.parent;
+    if (!word) return false;
     if (Math.abs(word.position.y - prisoner.position.y - .8) > 2.5) return false;
     if (word.userData.category !== category) {
       wrongUntil = elapsed + 1;
@@ -157,12 +258,13 @@ export function createChasmWordRescue(parent, prisoner, groundY, depth, onMiss) 
       prisoner.position.set(
         THREE.MathUtils.lerp(start.x, branches.position.x, align),
         THREE.MathUtils.lerp(start.y, -depth + .45, t ** 1.25),
-        THREE.MathUtils.lerp(start.z, branches.position.z + 1.06, align),
+        THREE.MathUtils.lerp(start.z, branches.position.z + viewSide * 1.06, align),
       );
-      prisoner.rotation.set(.15 * Math.sin(elapsed * 5), Math.PI, .24 * Math.sin(elapsed * 4));
+      prisoner.rotation.set(.15 * Math.sin(elapsed * 5), branches.rotation.y, .24 * Math.sin(elapsed * 4));
       const prompt = prompts[category];
       prompt.visible = inXR;
-      prompt.position.set(prisoner.position.x, prisoner.position.y + 2.1, prisoner.position.z + .5);
+      prompt.rotation.y = branches.rotation.y;
+      prompt.position.set(prisoner.position.x, prisoner.position.y + 2.1, prisoner.position.z + viewSide * .5);
       notice.hidden = inXR;
       if (wrongUntil && elapsed >= wrongUntil) {
         wrongUntil = 0;
