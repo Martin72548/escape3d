@@ -6,11 +6,13 @@ const categories = translate([
   { prompt: 'Prends un verbe', words: ['courir', 'sauter', 'monter', 'fuir'] },
   { prompt: 'Prends un nom', words: ['dragon', 'rivière', 'corde', 'château'] },
   { prompt: 'Prends un article', words: ['le', 'une', 'les', 'des'] },
+  { prompt: 'Prends une préposition', words: ['pendant', 'de', 'contre', 'avec', 'pour', 'par', 'depuis'] },
 ], [
   { prompt: 'Toma un adjetivo', words: ['ágil', 'oscuro', 'ligero', 'valiente'] },
   { prompt: 'Toma un verbo', words: ['correr', 'saltar', 'subir', 'huir'] },
   { prompt: 'Toma un sustantivo', words: ['dragón', 'río', 'cuerda', 'castillo'] },
   { prompt: 'Toma un artículo', words: ['el', 'una', 'los', 'las'] },
+  { prompt: 'Toma una preposición', words: ['durante', 'de', 'contra', 'con', 'para', 'por', 'desde'] },
 ]);
 const descentDuration = 22;
 
@@ -85,8 +87,11 @@ export function createChasmWordRescue(parent, prisoner, groundY, depth, onMiss) 
   const words = [];
   for (let row = 0; row < 28; row++) {
     for (let column = 0; column < 2; column++) {
-      const category = (row + column * 2) % categories.length;
-      const mesh = label(categories[category].words[(Math.floor(row / 2) + column) % 4], 1.45, .46);
+      const slot = row * 2 + column;
+      const category = slot % categories.length;
+      const options = categories[category].words;
+      const word = options[Math.floor(slot / categories.length) % options.length];
+      const mesh = label(word, 1.45, .46);
       const x = column === 0 ? -1.27 : 1.27;
       const y = THREE.MathUtils.lerp(groundY + .65, -depth + 1, row / 27);
       mesh.position.set(x, y, 1.34);
